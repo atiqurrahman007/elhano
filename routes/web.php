@@ -160,6 +160,12 @@ Route::group(['namespace' => 'Frontend', 'middleware' => ['ipcheck', 'check_refe
     Route::get('/payment-cancel', [ShurjopayControllers::class, 'payment_cancel'])->name('payment_cancel');
 });
 
+// Admin login - public (no customer middleware, login page must be accessible without session)
+Route::group(['prefix' => 'admin', 'middleware' => ['ipcheck', 'check_refer']], function () {
+    Route::get('login', [\App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('admin.login');
+    Route::post('login', [\App\Http\Controllers\Auth\LoginController::class, 'login'])->name('admin.login.post');
+});
+
 // unathenticate admin route
 Route::group(['namespace' => 'Admin', 'prefix' => 'admin', 'middleware' => ['customer', 'ipcheck', 'check_refer']], function () {
     Route::get('locked', [DashboardController::class, 'locked'])->name('locked');
