@@ -14,6 +14,7 @@ use App\Models\GoogleTagManager;
 use App\Models\CouponCode;
 use App\Models\Order;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -35,12 +36,15 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
 
+
+        URL::forceScheme('https');
+
         view()->composer('*', function ($view) {
 
             $generalsetting = Cache::remember('generalsetting', now()->addDays(7), function () {
                 return GeneralSetting::where('status', 1)->first();
             });
-            
+
             $coupon = Cache::remember('coupon', now()->addDays(7), function () {
                 return CouponCode::where('status', 1)->orderByDesc('amount')->first();
             });
@@ -71,9 +75,12 @@ class AppServiceProvider extends ServiceProvider
 
             $categories = Category::where('status', 1)
                 ->select('id', 'name', 'slug', 'status', 'image', 'front_view', 'highlight')
-                ->with(['subcategories.childcategories', 'products' => function($query) {
-                    $query->latest()->take(12)->select('id', 'name', 'slug', 'new_price', 'category_id', 'status')->with('image');
-                }])
+                ->with([
+                    'subcategories.childcategories',
+                    'products' => function ($query) {
+                        $query->latest()->take(12)->select('id', 'name', 'slug', 'new_price', 'category_id', 'status')->with('image');
+                    }
+                ])
                 ->get();
             $neworder = Order::where('order_status', '1')->count();
             $pendingorder = Order::where('order_status', '1')->latest()->limit(9)->get();
