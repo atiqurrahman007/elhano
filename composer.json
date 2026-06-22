@@ -15,7 +15,6 @@
         "laravel/tinker": "^2.9",
         "laravel/ui": "^4.2",
         "milon/barcode": "^11.0",
-        "shurjopayv2/laravel8": "dev-master",
         "spatie/laravel-permission": "^6.9"
     },
     "require-dev": {

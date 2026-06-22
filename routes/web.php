@@ -50,27 +50,27 @@ Route::get('/cc', function () {
     Artisan::call('cache:clear');
     Artisan::call('route:clear');
     Artisan::call('view:clear');
-    Toastr::success('Success','System cache clear successfully');
+    Toastr::success('Success', 'System cache clear successfully');
     return back();
 });
 
-    Route::post('/customer/coupon', [CustomerController::class, 'customer_coupon'])->name('customer.coupon');
-    Route::post('/customer/coupon-remove', [CustomerController::class, 'coupon_remove'])->name('customer.coupon_remove');
-    Route::get('product-feed', [FrontendController::class, 'product_feed'])->name('products.product_feed');
-    Route::get('barcodess', [ProductController::class, 'barcodess'])->name('barcodess.update');
-    
-    Route::get('/customer/wishlist', [CustomerController::class, 'wishlist'])->name('customer.wishlist');
-    //wishlist route
-    Route::get('wishlist/store', [ShoppingController::class, 'wishlist_store'])->name('wishlist.store');
-    Route::get('wishlist', [ShoppingController::class, 'wishlist_show'])->name('wishlist.show');
-    Route::get('wishlist/remove', [ShoppingController::class, 'wishlist_remove'])->name('wishlist.remove');
-    Route::get('wishlist/count', [ShoppingController::class, 'wishlist_count'])->name('wishlist.count');
-    
-    Route::get('cart/all-clear', [ShoppingController::class, 'cart_clear'])->name('cart_all.clear');
-    
-    Route::get('cart_item/count2', [ShoppingController::class, 'cart_right_count'])->name('cart_right.count');
-    Route::get('cart_item/count', [ShoppingController::class, 'cart_left_count'])->name('cart_left.count');
-    
+Route::post('/customer/coupon', [CustomerController::class, 'customer_coupon'])->name('customer.coupon');
+Route::post('/customer/coupon-remove', [CustomerController::class, 'coupon_remove'])->name('customer.coupon_remove');
+Route::get('product-feed', [FrontendController::class, 'product_feed'])->name('products.product_feed');
+Route::get('barcodess', [ProductController::class, 'barcodess'])->name('barcodess.update');
+
+Route::get('/customer/wishlist', [CustomerController::class, 'wishlist'])->name('customer.wishlist');
+//wishlist route
+Route::get('wishlist/store', [ShoppingController::class, 'wishlist_store'])->name('wishlist.store');
+Route::get('wishlist', [ShoppingController::class, 'wishlist_show'])->name('wishlist.show');
+Route::get('wishlist/remove', [ShoppingController::class, 'wishlist_remove'])->name('wishlist.remove');
+Route::get('wishlist/count', [ShoppingController::class, 'wishlist_count'])->name('wishlist.count');
+
+Route::get('cart/all-clear', [ShoppingController::class, 'cart_clear'])->name('cart_all.clear');
+
+Route::get('cart_item/count2', [ShoppingController::class, 'cart_right_count'])->name('cart_right.count');
+Route::get('cart_item/count', [ShoppingController::class, 'cart_left_count'])->name('cart_left.count');
+
 
 Route::group(['namespace' => 'Frontend', 'middleware' => ['ipcheck', 'check_refer']], function () {
     Route::get('/', [FrontendController::class, 'index'])->name('home');
@@ -159,7 +159,7 @@ Route::group(['namespace' => 'Frontend', 'middleware' => ['ipcheck', 'check_refe
     Route::get('/payment-success', [ShurjopayControllers::class, 'payment_success'])->name('payment_success');
     Route::get('/payment-cancel', [ShurjopayControllers::class, 'payment_cancel'])->name('payment_cancel');
 });
-    
+
 // unathenticate admin route
 Route::group(['namespace' => 'Admin', 'prefix' => 'admin', 'middleware' => ['customer', 'ipcheck', 'check_refer']], function () {
     Route::get('locked', [DashboardController::class, 'locked'])->name('locked');
@@ -178,7 +178,7 @@ Route::group(['namespace' => 'Admin', 'middleware' => ['auth', 'lock', 'check_re
     Route::get('send-sms', [DashboardController::class, 'send_sms'])->name('admin.send_sms');
     Route::post('send-sms-post', [DashboardController::class, 'send_sms_post'])->name('admin.send_sms_post');
 
-   Route::get('reports/facebook-catelogue', [ReportsController::class, 'facebook_catelogue'])->name('reports.facebook_catelogue');
+    Route::get('reports/facebook-catelogue', [ReportsController::class, 'facebook_catelogue'])->name('reports.facebook_catelogue');
     // users route
     Route::get('users/manage', [UserController::class, 'index'])->name('users.index');
     Route::get('users/create', [UserController::class, 'create'])->name('users.create');
@@ -357,7 +357,7 @@ Route::group(['namespace' => 'Admin', 'middleware' => ['auth', 'lock', 'check_re
     Route::get('products/update-feature', [ProductController::class, 'update_feature'])->name('products.update_feature');
     Route::get('products/update-status', [ProductController::class, 'update_status'])->name('products.update_status');
     Route::post('products/barcode-update', [ProductController::class, 'barcode_update'])->name('products.barcode_update');
-    Route::get('products/barcode', [ProductController::class,'barcode'])->name('products.barcode');
+    Route::get('products/barcode', [ProductController::class, 'barcode'])->name('products.barcode');
     Route::get('products/purchase-create', [ProductController::class, 'purchase_create'])->name('products.purchase_create');
     Route::post('products/purchase-store', [ProductController::class, 'purchase_store'])->name('products.purchase_store');
     Route::get('products/purchase-list', [ProductController::class, 'purchase_list'])->name('products.purchase');
@@ -502,12 +502,12 @@ Route::group(['namespace' => 'Admin', 'middleware' => ['auth', 'lock', 'check_re
     Route::post('shipping-charge/inactive', [ShippingChargeController::class, 'inactive'])->name('shippingcharges.inactive');
     Route::post('shipping-charge/active', [ShippingChargeController::class, 'active'])->name('shippingcharges.active');
     Route::post('shipping-charge/destroy', [ShippingChargeController::class, 'destroy'])->name('shippingcharges.destroy');
-    
+
     // district routes
-    Route::get('district/manage', [DistrictController::class,'index'])->name('districts.index');
-    Route::get('district/{id}/edit', [DistrictController::class,'edit'])->name('districts.edit');
-    Route::post('district/update', [DistrictController::class,'update'])->name('districts.update');
-    Route::post('district/charge-update', [DistrictController::class,'district_charge'])->name('districts.charge');
+    Route::get('district/manage', [DistrictController::class, 'index'])->name('districts.index');
+    Route::get('district/{id}/edit', [DistrictController::class, 'edit'])->name('districts.edit');
+    Route::post('district/update', [DistrictController::class, 'update'])->name('districts.update');
+    Route::post('district/charge-update', [DistrictController::class, 'district_charge'])->name('districts.charge');
 
     // backend customer route
     Route::get('customer', [CustomerManageController::class, 'index'])->name('customers.index');
@@ -534,6 +534,6 @@ Route::group(['namespace' => 'Admin', 'middleware' => ['auth', 'lock', 'check_re
     Route::post('coupon-code/destroy', [CouponCodeController::class, 'destroy'])->name('couponcodes.destroy');
 });
 
-Route::get('public/{path}', function($path) {
+Route::get('public/{path}', function ($path) {
     return redirect($path);
 })->where('path', '.*');

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Frontend;
 
-use shurjopayv2\ShurjopayLaravelPackage8\Http\Controllers\ShurjopayController;
 use App\Http\Controllers\Controller;
+use App\Service\ShurjopayService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Brian2694\Toastr\Facades\Toastr;
@@ -33,12 +33,12 @@ use DB;
 use Log;
 class FrontendController extends Controller
 {
-    
-     public function product_feed()
+
+    public function product_feed()
     {
-        $products = Product::select('id', 'name', 'slug', 'description', 'stock','type', 'new_price', 'category_id', 'brand_id')
+        $products = Product::select('id', 'name', 'slug', 'description', 'stock', 'type', 'new_price', 'category_id', 'brand_id')
             ->with(['image', 'category', 'brand'])
-            ->where('status',1)
+            ->where('status', 1)
             ->get();
 
         $xml = new \SimpleXMLElement('<rss/>');
@@ -73,9 +73,9 @@ class FrontendController extends Controller
             } else {
                 $availability = $product->stock > 0 ? 'in stock' : 'out of stock';
             }
-            
+
             $item->addChild('g:availability', $availability, 'http://base.google.com/ns/1.0');
-            
+
             $item->addChild('g:price', $product->new_price . ' BDT', 'http://base.google.com/ns/1.0');
 
             if ($product->brand) {
@@ -93,18 +93,19 @@ class FrontendController extends Controller
 
         return response($xml->asXML(), 200)->header('Content-Type', 'application/xml');
     }
-    
-    public function index(){
+
+    public function index()
+    {
         $sections = \App\Models\HomepageSection::where('status', 1)->orderBy('sort_order', 'asc')->get();
-        
+
         // Loop through sections and load data if needed
-        foreach($sections as $section){
+        foreach ($sections as $section) {
             $params = $section->params ?? [];
-            
-            if($section->section_key == 'product_grid' || $section->section_key == 'product_slider' || $section->section_key == 'product_with_banner'){
+
+            if ($section->section_key == 'product_grid' || $section->section_key == 'product_slider' || $section->section_key == 'product_with_banner') {
                 $limit = $params['limit'] ?? 10;
-                if(isset($params['product_ids']) && is_array($params['product_ids'])) {
-                     $section->data = Product::whereIn('id', $params['product_ids'])
+                if (isset($params['product_ids']) && is_array($params['product_ids'])) {
+                    $section->data = Product::whereIn('id', $params['product_ids'])
                         ->where('status', 1)
                         ->select('id', 'name', 'slug', 'new_price', 'old_price', 'type')
                         ->with('image')
@@ -113,31 +114,28 @@ class FrontendController extends Controller
                         ->get();
                 } else {
                     // Fallback for old/generic types if needed, or empty
-                     $section->data = collect([]);
+                    $section->data = collect([]);
                 }
-            }
-            elseif($section->section_key == 'category'){
-                if(isset($params['category_id'])) {
-                     $category = Category::find($params['category_id']);
-                     if($category) {
-                         $section->category = $category;
-                         $section->data = Product::where('category_id', $category->id)
-                                        ->where('status', 1)
-                                        ->select('id', 'name', 'slug', 'new_price', 'old_price', 'type')
-                                        ->with('image')
-                                        ->withCount('variable')
-                                        ->take(10)
-                                        ->get();
-                     }
+            } elseif ($section->section_key == 'category') {
+                if (isset($params['category_id'])) {
+                    $category = Category::find($params['category_id']);
+                    if ($category) {
+                        $section->category = $category;
+                        $section->data = Product::where('category_id', $category->id)
+                            ->where('status', 1)
+                            ->select('id', 'name', 'slug', 'new_price', 'old_price', 'type')
+                            ->with('image')
+                            ->withCount('variable')
+                            ->take(10)
+                            ->get();
+                    }
                 }
-            }
-            elseif($section->section_key == 'category_bar'){
-                 $section->data = Category::where(['front_view' => 1, 'status' => 1])
-                    ->select('id','name','slug','front_view','status','image')
+            } elseif ($section->section_key == 'category_bar') {
+                $section->data = Category::where(['front_view' => 1, 'status' => 1])
+                    ->select('id', 'name', 'slug', 'front_view', 'status', 'image')
                     ->orderBy('id', 'ASC')
                     ->get();
-            }
-            elseif($section->section_key == 'brand_slider'){
+            } elseif ($section->section_key == 'brand_slider') {
                 $section->data = Brand::where(['status' => 1])->orderBy('id', 'ASC')->get();
             }
             // Slider, Banner, Collection rely on params directly in view without extra DB queries
@@ -150,7 +148,7 @@ class FrontendController extends Controller
     {
         $category = Category::where(['slug' => $slug, 'status' => 1])->first();
         $products = Product::where(['status' => 1, 'category_id' => $category->id])
-            ->select('id', 'name', 'slug', 'new_price', 'old_price', 'category_id','stock','coupon_id', 'type')
+            ->select('id', 'name', 'slug', 'new_price', 'old_price', 'category_id', 'stock', 'coupon_id', 'type')
             ->with('reviews')->withCount('variable');
         $subcategories = Subcategory::where('category_id', $category->id)->get();
         $sizes = Size::where('status', 1)->get();
@@ -169,7 +167,7 @@ class FrontendController extends Controller
         } elseif ($request->sort == 6) {
             $products = $products->orderBy('name', 'desc');
         } else {
-            $products = $products->orderBy('sort','asc');
+            $products = $products->orderBy('sort', 'asc');
         }
 
         $min_price = $products->min('new_price');
@@ -186,16 +184,16 @@ class FrontendController extends Controller
             ];
         }
 
-       if ($request->min_price && $request->max_price) {
-        $minPrices = $request->min_price; 
-        $maxPrices = $request->max_price; 
+        if ($request->min_price && $request->max_price) {
+            $minPrices = $request->min_price;
+            $maxPrices = $request->max_price;
 
-        $products = $products->where(function ($query) use ($minPrices, $maxPrices) {
-            foreach ($minPrices as $key => $min) {
+            $products = $products->where(function ($query) use ($minPrices, $maxPrices) {
+                foreach ($minPrices as $key => $min) {
                     $max = $maxPrices[$key];
                     $query->orWhere(function ($q) use ($min, $max) {
                         $q->where('new_price', '>=', $min)
-                          ->where('new_price', '<=', $max);
+                            ->where('new_price', '<=', $max);
                     });
                 }
             });
@@ -204,15 +202,15 @@ class FrontendController extends Controller
         $selectedSizes = $request->input('size', []);
         $products = $products->when($selectedSizes, function ($query) use ($selectedSizes) {
             return $query->whereHas('variable', function ($variableQuery) use ($selectedSizes) {
-                $variableQuery->whereIn('size', $selectedSizes); 
+                $variableQuery->whereIn('size', $selectedSizes);
             });
         });
 
-        $selectedGender = $request->input('gender', []); 
+        $selectedGender = $request->input('gender', []);
         $products = $products->when($selectedGender, function ($query) use ($selectedGender) {
             return $query->whereIn('gender', $selectedGender);
         });
-        
+
         $selectedSubcategories = $request->input('subcategory', []);
         $products = $products->when($selectedSubcategories, function ($query) use ($selectedSubcategories) {
             return $query->whereHas('subcategory', function ($subQuery) use ($selectedSubcategories) {
@@ -221,14 +219,14 @@ class FrontendController extends Controller
         });
 
         $products = $products->paginate(24);
-        return view('frontEnd.layouts.pages.category', compact('category', 'products', 'subcategories', 'min_price', 'max_price','price_ranges','sizes'));
+        return view('frontEnd.layouts.pages.category', compact('category', 'products', 'subcategories', 'min_price', 'max_price', 'price_ranges', 'sizes'));
     }
 
     public function subcategory($slug, Request $request)
     {
         $subcategory = Subcategory::where(['slug' => $slug, 'status' => 1])->first();
         $products = Product::where(['status' => 1, 'subcategory_id' => $subcategory->id])
-            ->select('id', 'name', 'slug', 'new_price', 'old_price', 'type', 'category_id','stock', 'subcategory_id','coupon_id')->withCount('variable');
+            ->select('id', 'name', 'slug', 'new_price', 'old_price', 'type', 'category_id', 'stock', 'subcategory_id', 'coupon_id')->withCount('variable');
         $sizes = Size::where('status', 1)->get();
 
         // return $request->sort;
@@ -262,16 +260,16 @@ class FrontendController extends Controller
             ];
         }
 
-       if ($request->min_price && $request->max_price) {
-        $minPrices = $request->min_price; 
-        $maxPrices = $request->max_price; 
+        if ($request->min_price && $request->max_price) {
+            $minPrices = $request->min_price;
+            $maxPrices = $request->max_price;
 
-        $products = $products->where(function ($query) use ($minPrices, $maxPrices) {
-            foreach ($minPrices as $key => $min) {
+            $products = $products->where(function ($query) use ($minPrices, $maxPrices) {
+                foreach ($minPrices as $key => $min) {
                     $max = $maxPrices[$key];
                     $query->orWhere(function ($q) use ($min, $max) {
                         $q->where('new_price', '>=', $min)
-                          ->where('new_price', '<=', $max);
+                            ->where('new_price', '<=', $max);
                     });
                 }
             });
@@ -280,26 +278,26 @@ class FrontendController extends Controller
         $selectedSizes = $request->input('size', []);
         $products = $products->when($selectedSizes, function ($query) use ($selectedSizes) {
             return $query->whereHas('variable', function ($variableQuery) use ($selectedSizes) {
-                $variableQuery->whereIn('size', $selectedSizes); 
+                $variableQuery->whereIn('size', $selectedSizes);
             });
         });
 
-        $selectedGender = $request->input('gender', []); 
+        $selectedGender = $request->input('gender', []);
         $products = $products->when($selectedGender, function ($query) use ($selectedGender) {
             return $query->whereIn('gender', $selectedGender);
         });
 
 
         $products = $products->paginate(36)->withQueryString();
-        
-        return view('frontEnd.layouts.pages.subcategory', compact('subcategory', 'products', 'min_price', 'max_price','price_ranges','sizes'));
+
+        return view('frontEnd.layouts.pages.subcategory', compact('subcategory', 'products', 'min_price', 'max_price', 'price_ranges', 'sizes'));
     }
 
     public function products($slug, Request $request)
     {
         $childcategory = Childcategory::where(['slug' => $slug, 'status' => 1])->first();
         $products = Product::where(['status' => 1, 'childcategory_id' => $childcategory->id])->with('category')
-            ->select('id', 'name', 'slug', 'new_price', 'old_price', 'type','stock', 'category_id', 'subcategory_id', 'childcategory_id','coupon_id','type')->withCount('variable');
+            ->select('id', 'name', 'slug', 'new_price', 'old_price', 'type', 'stock', 'category_id', 'subcategory_id', 'childcategory_id', 'coupon_id', 'type')->withCount('variable');
 
         if ($request->sort == 1) {
             $products = $products->orderBy('created_at', 'desc');
@@ -322,10 +320,11 @@ class FrontendController extends Controller
         return view('frontEnd.layouts.pages.childcategory', compact('childcategory', 'products'));
     }
 
-    public function brand($slug, Request $request){
+    public function brand($slug, Request $request)
+    {
         $brand = Brand::where(['slug' => $slug, 'status' => 1])->first();
         $products = Product::where(['status' => 1, 'brand_id' => $brand->id])
-            ->select('id', 'name', 'slug', 'new_price', 'old_price','stock', 'type', 'brand_id','coupon_id')->withCount('variable');
+            ->select('id', 'name', 'slug', 'new_price', 'old_price', 'stock', 'type', 'brand_id', 'coupon_id')->withCount('variable');
         if ($request->sort == 1) {
             $products = $products->orderBy('created_at', 'desc');
         } elseif ($request->sort == 2) {
@@ -345,53 +344,55 @@ class FrontendController extends Controller
         return view('frontEnd.layouts.pages.brand', compact('brand', 'products'));
     }
 
-    public function bestdeals(Request $request){
+    public function bestdeals(Request $request)
+    {
 
         $products = Product::where(['status' => 1, 'topsale' => 1])
-        ->orderBy('id', 'DESC')
-        ->select('id', 'name', 'slug', 'new_price', 'old_price', 'type','stock','coupon_id')
-        ->withCount('variable');
+            ->orderBy('id', 'DESC')
+            ->select('id', 'name', 'slug', 'new_price', 'old_price', 'type', 'stock', 'coupon_id')
+            ->withCount('variable');
 
         if ($request->sort == 1) {
-        $products = $products->orderBy('created_at', 'desc');
-            } elseif ($request->sort == 2) {
-                $products = $products->orderBy('created_at', 'asc');
-            } elseif ($request->sort == 3) {
-                $products = $products->orderBy('new_price', 'desc');
-            } elseif ($request->sort == 4) {
-                $products = $products->orderBy('new_price', 'asc');
-            } elseif ($request->sort == 5) {
-                $products = $products->orderBy('name', 'asc');
-            } elseif ($request->sort == 6) {
-                $products = $products->orderBy('name', 'desc');
-            } else {
-                $products = $products->latest();
+            $products = $products->orderBy('created_at', 'desc');
+        } elseif ($request->sort == 2) {
+            $products = $products->orderBy('created_at', 'asc');
+        } elseif ($request->sort == 3) {
+            $products = $products->orderBy('new_price', 'desc');
+        } elseif ($request->sort == 4) {
+            $products = $products->orderBy('new_price', 'asc');
+        } elseif ($request->sort == 5) {
+            $products = $products->orderBy('name', 'asc');
+        } elseif ($request->sort == 6) {
+            $products = $products->orderBy('name', 'desc');
+        } else {
+            $products = $products->latest();
         }
         $products = $products->paginate(36)->withQueryString();
 
         return view('frontEnd.layouts.pages.bestdeals', compact('products'));
     }
-    public function all_collection(Request $request){
+    public function all_collection(Request $request)
+    {
 
         $products = Product::where(['status' => 1])
-        ->orderBy('id', 'DESC')
-        ->select('id', 'name', 'slug', 'new_price', 'old_price', 'type','stock','coupon_id')
-        ->withCount('variable');
+            ->orderBy('id', 'DESC')
+            ->select('id', 'name', 'slug', 'new_price', 'old_price', 'type', 'stock', 'coupon_id')
+            ->withCount('variable');
 
         if ($request->sort == 1) {
-        $products = $products->orderBy('created_at', 'desc');
-            } elseif ($request->sort == 2) {
-                $products = $products->orderBy('created_at', 'asc');
-            } elseif ($request->sort == 3) {
-                $products = $products->orderBy('new_price', 'desc');
-            } elseif ($request->sort == 4) {
-                $products = $products->orderBy('new_price', 'asc');
-            } elseif ($request->sort == 5) {
-                $products = $products->orderBy('name', 'asc');
-            } elseif ($request->sort == 6) {
-                $products = $products->orderBy('name', 'desc');
-            } else {
-                $products = $products->latest();
+            $products = $products->orderBy('created_at', 'desc');
+        } elseif ($request->sort == 2) {
+            $products = $products->orderBy('created_at', 'asc');
+        } elseif ($request->sort == 3) {
+            $products = $products->orderBy('new_price', 'desc');
+        } elseif ($request->sort == 4) {
+            $products = $products->orderBy('new_price', 'asc');
+        } elseif ($request->sort == 5) {
+            $products = $products->orderBy('name', 'asc');
+        } elseif ($request->sort == 6) {
+            $products = $products->orderBy('name', 'desc');
+        } else {
+            $products = $products->latest();
         }
         $products = $products->paginate(36)->withQueryString();
 
@@ -399,36 +400,37 @@ class FrontendController extends Controller
     }
 
 
-    public function details($slug){
+    public function details($slug)
+    {
 
         $details = Product::where(['slug' => $slug, 'status' => 1])
             ->with('image', 'images', 'category', 'subcategory', 'childcategory')
-            ->withCount('variableimages','variable')
+            ->withCount('variableimages', 'variable')
             ->firstOrFail();
-            
+
         $discount = $details->old_price > 0
             ? (($details->old_price - $details->new_price) * 100) / $details->old_price
             : 0;
         $targetDiscount = round($discount);
-        
+
         $products = Product::where(['category_id' => $details->category_id, 'status' => 1])
             ->with('image')
-            ->select('id', 'name', 'slug', 'status', 'category_id', 'new_price', 'old_price','stock', 'type','coupon_id')
+            ->select('id', 'name', 'slug', 'status', 'category_id', 'new_price', 'old_price', 'stock', 'type', 'coupon_id')
             ->withCount('variable')
             ->get();
-    
+
         $products = $products->filter(function ($p) use ($targetDiscount) {
             $p->discount1 = $p->old_price > 0
                 ? round((($p->old_price - $p->new_price) * 100) / $p->old_price)
                 : null;
-    
+
             return $p->discount1 !== null && $p->discount1 === $targetDiscount;
         })
-        ->values();
+            ->values();
 
 
         $shippingcharge = ShippingCharge::where('status', 1)->get();
-        $reviews = Review::where('product_id', $details->id)->where('status','active')->get();
+        $reviews = Review::where('product_id', $details->id)->where('status', 'active')->get();
 
         $productcolors = ProductVariable::where('product_id', $details->id)->where('stock', '>', 0)
             ->whereNotNull('color')
@@ -456,12 +458,13 @@ class FrontendController extends Controller
         return response()->json($response);
     }
 
-    public function reviewPopup(Request $request) {
+    public function reviewPopup(Request $request)
+    {
         $review = Review::where(['id' => $request->id, 'status' => 'active'])->first();
         $rev_product = Product::where(['id' => $review->product_id, 'status' => 1])->with('images')->first();
         $customer = Customer::where(['id' => $review->customer_id])->first();
-        return view('frontEnd.layouts.ajax.reviewPopup', compact('rev_product','review','customer'));
-        
+        return view('frontEnd.layouts.ajax.reviewPopup', compact('rev_product', 'review', 'customer'));
+
     }
 
     public function quickView(Request $request)
@@ -486,13 +489,14 @@ class FrontendController extends Controller
         return view('frontEnd.layouts.ajax.quickview', compact('details', 'productcolors', 'productsizes'));
     }
 
-     public function livesearch(Request $request){
-        $products = Product::select('id', 'name', 'slug','stock','type', 'new_price','old_price')
+    public function livesearch(Request $request)
+    {
+        $products = Product::select('id', 'name', 'slug', 'stock', 'type', 'new_price', 'old_price')
             ->where('status', 1)
             ->with('image');
         if ($request->keyword) {
             $products = $products->where('name', 'LIKE', '%' . $request->keyword . "%")
-            ->Orwhere('sku', 'LIKE', '%' . $request->keyword . "%");
+                ->Orwhere('sku', 'LIKE', '%' . $request->keyword . "%");
         }
         if ($request->category) {
             $products = $products->where('category_id', $request->category);
@@ -504,27 +508,28 @@ class FrontendController extends Controller
         }
         $category = $request->category;
         $keyword = $request->keyword;
-        return view('frontEnd.layouts.ajax.search', compact('products','product_count','category','keyword'));
+        return view('frontEnd.layouts.ajax.search', compact('products', 'product_count', 'category', 'keyword'));
     }
-    public function search(Request $request){
+    public function search(Request $request)
+    {
         $products = Product::where(['status' => 1])
-        ->where('old_price','>','new_price')
-        ->select('id', 'name', 'slug','new_price','stock','type', 'old_price','category_id','topsale');
-            
+            ->where('old_price', '>', 'new_price')
+            ->select('id', 'name', 'slug', 'new_price', 'stock', 'type', 'old_price', 'category_id', 'topsale');
+
         // return $request->sort;
-        if($request->sort == 1){
-            $products = $products->orderBy('created_at','desc');
-        }elseif($request->sort == 2){
-            $products = $products->orderBy('created_at','asc');
-        }elseif($request->sort == 3){
-            $products = $products->orderBy('new_price','desc');
-        }elseif($request->sort == 4){
-            $products = $products->orderBy('new_price','asc');
-        }elseif($request->sort == 5){
-            $products = $products->orderBy('name','asc');
-        }elseif($request->sort == 6){
-            $products = $products->orderBy('name','desc');
-        }else{
+        if ($request->sort == 1) {
+            $products = $products->orderBy('created_at', 'desc');
+        } elseif ($request->sort == 2) {
+            $products = $products->orderBy('created_at', 'asc');
+        } elseif ($request->sort == 3) {
+            $products = $products->orderBy('new_price', 'desc');
+        } elseif ($request->sort == 4) {
+            $products = $products->orderBy('new_price', 'asc');
+        } elseif ($request->sort == 5) {
+            $products = $products->orderBy('name', 'asc');
+        } elseif ($request->sort == 6) {
+            $products = $products->orderBy('name', 'desc');
+        } else {
             $products = $products->latest();
         }
         if ($request->keyword) {
@@ -535,15 +540,15 @@ class FrontendController extends Controller
         }
         $products = $products->paginate(36);
         $impproducts = Product::where(['status' => 1, 'topsale' => 1])
-        ->with('image')
-        ->limit(6)
-        ->select('id', 'name', 'slug')
-        ->get();
+            ->with('image')
+            ->limit(6)
+            ->select('id', 'name', 'slug')
+            ->get();
         $keyword = $request->keyword;
-        return view('frontEnd.layouts.pages.search', compact('products','keyword','impproducts'));
+        return view('frontEnd.layouts.pages.search', compact('products', 'keyword', 'impproducts'));
     }
-    
-    
+
+
     public function shipping_charge(Request $request)
     {
         $subtotal = Cart::instance('shopping')->subtotal();
@@ -557,12 +562,12 @@ class FrontendController extends Controller
             $shipping = ShippingCharge::where(['id' => $shipping_id])->first();
             Session::put('shipping', $shipping->amount);
         }
-        
+
         $data = Cart::instance('shopping')->content();
-        if($request->campaign == 1){
+        if ($request->campaign == 1) {
             return view('frontEnd.layouts.ajax.cart_camp', compact('data'));
         }
-         return view('frontEnd.layouts.ajax.cart', compact('data'));
+        return view('frontEnd.layouts.ajax.cart', compact('data'));
     }
 
 
@@ -581,10 +586,11 @@ class FrontendController extends Controller
         $areas = District::where(['district' => $request->id])->pluck('area_name', 'id');
         return response()->json($areas);
     }
-    public function campaign($slug, Request $request){
+    public function campaign($slug, Request $request)
+    {
 
         $campaign = Campaign::where('slug', $slug)->with('images')->first();
-        $product = Product::select('id', 'name', 'slug', 'new_price', 'old_price', 'purchase_price', 'type', 'stock','coupon_id')->where(['id' => $campaign->product_id])->first();
+        $product = Product::select('id', 'name', 'slug', 'new_price', 'old_price', 'purchase_price', 'type', 'stock', 'coupon_id')->where(['id' => $campaign->product_id])->first();
         $productcolors = ProductVariable::where('product_id', $campaign->product_id)->where('stock', '>', 0)
             ->whereNotNull('color')
             ->select('color')
@@ -632,11 +638,11 @@ class FrontendController extends Controller
                 'coupon_id' => $product->coupon_id,
             ],
         ]);
-        $districts = District::distinct()->select('id','name')->orderBy('id', 'asc')->get();
+        $districts = District::distinct()->select('id', 'name')->orderBy('id', 'asc')->get();
         Session::put('shipping', 0);
-        return view('frontEnd.layouts.pages.campaign.campaign'.$campaign->template, compact('campaign', 'productsizes', 'productcolors', 'districts', 'old_price', 'new_price'));
-  
-       
+        return view('frontEnd.layouts.pages.campaign.campaign' . $campaign->template, compact('campaign', 'productsizes', 'productcolors', 'districts', 'old_price', 'new_price'));
+
+
     }
     public function campaign_stock(Request $request)
     {
@@ -673,7 +679,7 @@ class FrontendController extends Controller
     public function payment_success(Request $request)
     {
         $order_id = $request->order_id;
-        $shurjopay_service = new ShurjopayController();
+        $shurjopay_service = new ShurjopayService();
         $json = $shurjopay_service->verify($order_id);
         $data = json_decode($json);
 
@@ -731,7 +737,7 @@ class FrontendController extends Controller
     public function payment_cancel(Request $request)
     {
         $order_id = $request->order_id;
-        $shurjopay_service = new ShurjopayController();
+        $shurjopay_service = new ShurjopayService();
         $json = $shurjopay_service->verify($order_id);
         $data = json_decode($json);
 
