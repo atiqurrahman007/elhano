@@ -1,0 +1,4 @@
+User-agent: *
+Disallow:
+
+Sitemap: https://marvelfashionbd.com/sitemap.xml
