@@ -37,4 +37,13 @@ class LoginController extends Controller
     {
         $this->middleware('guest')->except('logout');
     }
+
+    /**
+     * Show the admin login form (uses backEnd themed view).
+     */
+    public function showLoginForm()
+    {
+        return view('backEnd.auth.login');
+    }
 }
+

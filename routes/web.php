@@ -41,8 +41,16 @@ use App\Http\Controllers\Admin\CouponCodeController;
 use App\Http\Controllers\Admin\DistrictController;
 use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\Admin\HomepageBuilderController;
+use App\Http\Controllers\Auth\LoginController;
 
-Auth::routes();
+// Admin login routes — must be defined BEFORE Auth::routes() so 'login' name resolves to /admin/login
+Route::prefix('admin')->group(function () {
+    Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('login', [LoginController::class, 'login'])->name('login.submit');
+});
+
+// Disable the default /login route to avoid named-route conflict
+Auth::routes(['login' => false]);
 
 
 Route::get('/cc', function () {
@@ -158,12 +166,6 @@ Route::group(['namespace' => 'Frontend', 'middleware' => ['ipcheck', 'check_refe
     Route::get('bkash/checkout-url/callback', [BkashController::class, 'callback'])->name('url-callback');
     Route::get('/payment-success', [ShurjopayControllers::class, 'payment_success'])->name('payment_success');
     Route::get('/payment-cancel', [ShurjopayControllers::class, 'payment_cancel'])->name('payment_cancel');
-});
-
-// Admin login - public (no customer middleware, login page must be accessible without session)
-Route::group(['prefix' => 'admin', 'middleware' => ['ipcheck', 'check_refer']], function () {
-    Route::get('login', [\App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('admin.login');
-    Route::post('login', [\App\Http\Controllers\Auth\LoginController::class, 'login'])->name('admin.login.post');
 });
 
 // unathenticate admin route
