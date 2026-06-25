@@ -36,7 +36,6 @@ jobs:
           git reset --hard &&
           git clean -df &&
           git pull origin main &&
-          php artisan migrate --force &&
           php artisan optimize:clear &&
           rm -rf public/storage &&
           php artisan storage:link
