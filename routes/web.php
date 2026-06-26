@@ -42,6 +42,7 @@ use App\Http\Controllers\Admin\DistrictController;
 use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\Admin\HomepageBuilderController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Admin\InventoryController;
 
 // Admin login routes — must be defined BEFORE Auth::routes() so 'login' name resolves to /admin/login
 Route::prefix('admin')->group(function () {
@@ -181,6 +182,14 @@ Route::get('/ajax-product-childcategory', [ProductController::class, 'getChildca
 // auth route
 Route::group(['namespace' => 'Admin', 'middleware' => ['auth', 'lock', 'check_refer'], 'prefix' => 'admin'], function () {
     Route::get('dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
+
+    // Inventory & Barcode POS routes
+    Route::get('inventory',              [InventoryController::class, 'index'])->name('inventory.index');
+    Route::get('inventory/scan',         [InventoryController::class, 'scanPage'])->name('inventory.scan');
+    Route::post('inventory/lookup',      [InventoryController::class, 'lookup'])->name('inventory.lookup');
+    Route::post('inventory/receive',     [InventoryController::class, 'receive'])->name('inventory.receive');
+    Route::post('inventory/adjust',      [InventoryController::class, 'adjust'])->name('inventory.adjust');
+    Route::get('inventory/log',          [InventoryController::class, 'log'])->name('inventory.log');
     Route::get('change-password', [DashboardController::class, 'changepassword'])->name('change_password');
     Route::post('new-password', [DashboardController::class, 'newpassword'])->name('new_password');
     Route::get('send-sms', [DashboardController::class, 'send_sms'])->name('admin.send_sms');

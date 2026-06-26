@@ -486,7 +486,7 @@ class OrderController extends Controller
     {
         $products = Product::select('id', 'name', 'new_price', 'old_price', 'slug', 'type', 'stock', 'pro_barcode', 'category_id')
             ->where('status', 1)
-            ->with('image')
+            ->with('image', 'firstVariable')
             ->withSum('variables', 'stock')
             ->get();
         $categories = Category::where('status', 1)->select('id', 'name')->get();

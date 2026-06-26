@@ -48,7 +48,7 @@ class ProductController extends Controller
 
     public function index(Request $request)
     {
-        $data = Product::latest()->select('id','name','category_id','new_price','topsale','feature_product','type', 'sku', 'status')->with('image', 'category')->withSum('variables', 'stock');
+        $data = Product::latest()->select('id','name','category_id','new_price','topsale','feature_product','type','pro_barcode','sku','status')->with('image', 'category', 'firstVariable')->withSum('variables', 'stock');
         
         if ($request->keyword) {
             $data = $data->where(function ($query) use ($request) {

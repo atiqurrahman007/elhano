@@ -64,31 +64,55 @@
                             <td>
                                 <div class="button-list custom-btn-list">
                                     @if($value->status == 1)
-                                    <form method="post" action="{{route('products.inactive')}}" class="d-inline"> 
+                                    <form method="post" action="{{route('products.inactive')}}" class="d-inline">
                                     @csrf
-                                    <input type="hidden" value="{{$value->id}}" name="hidden_id">       
+                                    <input type="hidden" value="{{$value->id}}" name="hidden_id">
                                     <button type="button" class="change-confirm" title="Active"><i class="fe-thumbs-down"></i></button></form>
                                     @else
                                     <form method="post" action="{{route('products.active')}}" class="d-inline">
                                         @csrf
-                                    <input type="hidden" value="{{$value->id}}" name="hidden_id">        
+                                    <input type="hidden" value="{{$value->id}}" name="hidden_id">
                                     <button type="button" class="change-confirm" title="Inactive"><i class="fe-thumbs-up"></i></button></form>
                                     @endif
 
                                     <a href="{{route('products.edit',$value->id)}}" title="Edit"><i class="fe-edit"></i></a>
 
-                                    <form method="post" action="{{route('products.destroy')}}" class="d-inline">        
+                                    <form method="post" action="{{route('products.destroy')}}" class="d-inline">
                                         @csrf
                                     <input type="hidden" value="{{$value->id}}" name="hidden_id">
                                     <button type="submit" class="delete-confirm" title="Delete"><i class="fe-trash-2"></i></button></form>
-                                     <a href="{{route('products.purchase_history',$value->id)}}" title="Purchase"><i class="fe-shopping-bag"></i></a>
+
+                                    <a href="{{route('products.purchase_history',$value->id)}}" title="Purchase History"><i class="fe-shopping-bag"></i></a>
+
+                                    {{-- Barcode Print Button — immutable, always same barcode --}}
+                                    @if($value->type == 1 && $value->pro_barcode)
+                                        <a href="{{ route('products.barcode') }}?product_id={{ $value->id }}&type=1&copies=1"
+                                           title="Barcode: {{ $value->pro_barcode }} — Click to print"
+                                           style="color:#222">
+                                            <i class="ri-barcode-line" style="font-size:17px;vertical-align:middle"></i>
+                                        </a>
+                                    @elseif($value->type == 0 && $value->firstVariable && $value->firstVariable->pro_barcode)
+                                        <a href="{{ route('products.barcode') }}?product_id={{ $value->firstVariable->id }}&type=0&copies=1"
+                                           title="Barcode: {{ $value->firstVariable->pro_barcode }} — Click to print (variants)"
+                                           style="color:#222">
+                                            <i class="ri-barcode-line" style="font-size:17px;vertical-align:middle"></i>
+                                        </a>
+                                    @endif
                                 </div>
                             </td>
-                            <td>{{$value->name}}</td>
+                            <td>
+                                {{$value->name}}
+                                {{-- Immutable barcode number shown under name for quick reference --}}
+                                @if($value->type == 1 && $value->pro_barcode)
+                                    <br><small style="font-family:monospace;font-size:10px;letter-spacing:1px;color:#888">{{ $value->pro_barcode }}</small>
+                                @elseif($value->type == 0 && $value->firstVariable && $value->firstVariable->pro_barcode)
+                                    <br><small style="font-family:monospace;font-size:10px;letter-spacing:1px;color:#888">{{ $value->firstVariable->pro_barcode }}<span style="color:#0dcaf0"> +variants</span></small>
+                                @endif
+                            </td>
                             <td>{{$value->category?$value->category->name:''}}</td>
                             <td><img src="{{asset($value->image?$value->image->image:'')}}" class="backend-image" alt=""></td>
                             <td>{{$value->variable?$value->variable->new_price: $value->new_price}}</td>
-                             <td>{{ $value->type == 0 ? ($value->variables_sum_stock ?? 0) : $value->stock }}</td>
+                            <td>{{ $value->type == 0 ? ($value->variables_sum_stock ?? 0) : $value->stock }}</td>
                             <td><p class="m-0">Hot Deals : {{$value->topsale==1?'Yes':'No'}}</p>
                                 <p class="m-0">Top Feature : {{$value->feature_product==1?'Yes':'No'}}</p></td>
                             <td>@if($value->status==1)<span class="badge bg-soft-success text-success">Active</span> @else <span class="badge bg-soft-danger text-danger">Inactive</span> @endif</td>

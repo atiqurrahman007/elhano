@@ -103,7 +103,7 @@
                     <!-- Product Grid -->
                     <div class="row" id="product_grid">
                         @foreach($products as $product)
-                        <div class="col-md-3 col-sm-4 col-6 mb-3 product-item-wrapper" data-category="{{ $product->category_id ?? 'all' }}" data-name="{{ strtolower($product->name) }}" data-code="{{ $product->pro_barcode ?? '' }}">
+                        <div class="col-md-3 col-sm-4 col-6 mb-3 product-item-wrapper" data-category="{{ $product->category_id ?? 'all' }}" data-name="{{ strtolower($product->name) }}" data-code="{{ $product->type == 1 ? ($product->pro_barcode ?? '') : ($product->firstVariable->pro_barcode ?? '') }}" data-id="{{ $product->id }}" data-type="{{ $product->type }}">
                             <div class="pos_product_item cart_add" data-id="{{$product->id}}" data-type="{{$product->type}}">
                                 <img src="{{asset($product->image ? $product->image->image : 'public/images/no-image.png')}}" class="pos_product_img" alt="{{$product->name}}">
                                 <div class="pos_product_content">
@@ -239,11 +239,37 @@
             }
         });
 
-        // Live Search
-        $('#search_product').on('keyup', function() {
-            var value = $(this).val().toLowerCase();
+        // Live Search — filters grid by name or barcode, and auto-adds on exact barcode match (Enter)
+        $('#search_product').on('keyup', function(e) {
+            var value = $(this).val().trim();
+            var valueLower = value.toLowerCase();
+
+            // On Enter key: check for exact barcode match and add to cart directly
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                var exactMatch = null;
+                $("#product_grid .product-item-wrapper").each(function() {
+                    var code = $(this).data('code').toString();
+                    if (code === value && value !== '') {
+                        exactMatch = $(this);
+                        return false; // break
+                    }
+                });
+
+                if (exactMatch) {
+                    // Trigger click on the product card inside the matched wrapper
+                    exactMatch.find('.cart_add').trigger('click');
+                    $(this).val(''); // clear input after scan
+                    // Show all products again
+                    $("#product_grid .product-item-wrapper").show();
+                    return;
+                }
+            }
+
+            // Regular keyup: filter the grid
             $("#product_grid .product-item-wrapper").filter(function() {
-                $(this).toggle($(this).data('name').indexOf(value) > -1 || $(this).data('code').toString().indexOf(value) > -1)
+                var nameMatch = $(this).data('name').indexOf(valueLower) > -1;
+                var codeMatch = $(this).data('code').toString().indexOf(value) > -1;
+                $(this).toggle(nameMatch || codeMatch);
             });
         });
 

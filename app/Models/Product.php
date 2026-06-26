@@ -47,6 +47,11 @@ class Product extends Model
     {
         return $this->hasOne('App\Models\ProductVariable')->where('stock', '>', 0);
     }
+    // For barcode printing — always returns first variant regardless of stock
+    public function firstVariable()
+    {
+        return $this->hasOne('App\Models\ProductVariable');
+    }
     public function variables()
     {
         return $this->hasMany('App\Models\ProductVariable')->where('stock', '>', 0);
