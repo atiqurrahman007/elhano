@@ -45,56 +45,60 @@ class OrderController extends Controller
         $qty = 1;
         $keyword = $request->keyword;
 
-        if (is_numeric($keyword)) {
-            // Search for the product or product variable by barcode
+        $product = null;
+        $var_product = null;
+        if ($keyword) {
             $product = Product::where('pro_barcode', $keyword)->with('image')->first();
             $var_product = !$product ? ProductVariable::where('pro_barcode', $keyword)->with('product.image')->first() : null;
+        }
 
-            if ($product || $var_product) {
-                $product_data = $product ?: $var_product->product;
-                $purchase_price = $product ? $product->purchase_price : $var_product->purchase_price;
-                $old_price = $product ? $product->old_price : $var_product->old_price;
-                $new_price = $product ? $product->new_price : $var_product->new_price;
-                $stock = $product ? $product->stock : $var_product->stock;
-                $product_id = $product ? $product->id : $var_product->product_id;
-                $product_name = $product ? $product->name : $var_product->product->name;
-                $product_slug = $product ? $product->slug : $var_product->product->slug;
-                $product_image = $product ? $product->image->image : $var_product->image;
-                $product_type = $product ? $product->type : $var_product->product->type;
-                $product_size = $var_product->size ?? null;
-                $product_color = $var_product->color ?? null;
+        if ($product || $var_product) {
+            $product_data = $product ?: $var_product->product;
+            $purchase_price = $product ? $product->purchase_price : $var_product->purchase_price;
+            $old_price = $product ? $product->old_price : $var_product->old_price;
+            $new_price = $product ? $product->new_price : $var_product->new_price;
+            $stock = $product ? $product->stock : $var_product->stock;
+            $product_id = $product ? $product->id : $var_product->product_id;
+            $product_name = $product ? $product->name : $var_product->product->name;
+            $product_slug = $product ? $product->slug : $var_product->product->slug;
+            $product_image = $product 
+                ? ($product->image ? $product->image->image : null) 
+                : ($var_product->product && $var_product->product->image ? $var_product->product->image->image : null);
+            $product_type = $product ? $product->type : $var_product->product->type;
+            $product_size = $var_product->size ?? null;
+            $product_color = $var_product->color ?? null;
 
-                $cartitem = Cart::instance('sale')->content()->where('id', $product_id)->first();
-                $cart_qty = $cartitem ? $cartitem->qty + $qty : $qty;
+            $cartitem = Cart::instance('sale')->content()->where('id', $product_id)->first();
+            $cart_qty = $cartitem ? $cartitem->qty + $qty : $qty;
 
-                if ($stock < $cart_qty) {
-                    Toastr::error('Product stock limit over', 'Failed!');
-                    return response()->json(['status' => 'limitover', 'message' => 'Your stock limit is over']);
-                }
-
-                $cartinfo = Cart::instance('sale')->add([
-                    'id' => $product_id,
-                    'name' => $product_name,
-                    'qty' => $qty,
-                    'price' => $new_price,
-                    'options' => [
-                        'slug' => $product_slug,
-                        'image' => $product_image,
-                        'old_price' => $old_price,
-                        'purchase_price' => $purchase_price,
-                        'product_size' => $product_size,
-                        'product_color' => $product_color,
-                        'type' => $product_type
-                    ],
-                ]);
-
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Your Product Added'
-                ]);
+            if ($stock < $cart_qty) {
+                Toastr::error('Product stock limit over', 'Failed!');
+                return response()->json(['status' => 'limitover', 'message' => 'Your stock limit is over']);
             }
+
+            $cartinfo = Cart::instance('sale')->add([
+                'id' => $product_id,
+                'name' => $product_name,
+                'qty' => $qty,
+                'price' => $new_price,
+                'weight' => 1,
+                'options' => [
+                    'slug' => $product_slug,
+                    'image' => $product_image,
+                    'old_price' => $old_price,
+                    'purchase_price' => $purchase_price,
+                    'product_size' => $product_size,
+                    'product_color' => $product_color,
+                    'type' => $product_type
+                ],
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Your Product Added'
+            ]);
         } else {
-            // If not numeric, search for products by name or barcode
+            // If not found by exact barcode, search for products by name or barcode
             $products = Product::select('id', 'name', 'slug', 'new_price', 'old_price', 'type', 'stock')
                 ->with('image', 'variables');
 
@@ -486,7 +490,7 @@ class OrderController extends Controller
     {
         $products = Product::select('id', 'name', 'new_price', 'old_price', 'slug', 'type', 'stock', 'pro_barcode', 'category_id')
             ->where('status', 1)
-            ->with('image', 'firstVariable')
+            ->with('image', 'firstVariable', 'variables')
             ->withSum('variables', 'stock')
             ->get();
         $categories = Category::where('status', 1)->select('id', 'name')->get();

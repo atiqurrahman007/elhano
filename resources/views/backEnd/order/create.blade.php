@@ -103,7 +103,7 @@
                     <!-- Product Grid -->
                     <div class="row" id="product_grid">
                         @foreach($products as $product)
-                        <div class="col-md-3 col-sm-4 col-6 mb-3 product-item-wrapper" data-category="{{ $product->category_id ?? 'all' }}" data-name="{{ strtolower($product->name) }}" data-code="{{ $product->type == 1 ? ($product->pro_barcode ?? '') : ($product->firstVariable->pro_barcode ?? '') }}" data-id="{{ $product->id }}" data-type="{{ $product->type }}">
+                        <div class="col-md-3 col-sm-4 col-6 mb-3 product-item-wrapper" data-category="{{ $product->category_id ?? 'all' }}" data-name="{{ strtolower($product->name) }}" data-code="{{ $product->type == 1 ? ($product->pro_barcode ?? '') : implode(',', array_filter(array_merge([$product->pro_barcode], $product->variables->pluck('pro_barcode')->toArray()))) }}" data-id="{{ $product->id }}" data-type="{{ $product->type }}">
                             <div class="pos_product_item cart_add" data-id="{{$product->id}}" data-type="{{$product->type}}">
                                 <img src="{{asset($product->image ? $product->image->image : 'public/images/no-image.png')}}" class="pos_product_img" alt="{{$product->name}}">
                                 <div class="pos_product_content">
@@ -239,36 +239,107 @@
             }
         });
 
-        // Live Search — filters grid by name or barcode, and auto-adds on exact barcode match (Enter)
-        $('#search_product').on('keyup', function(e) {
-            var value = $(this).val().trim();
-            var valueLower = value.toLowerCase();
+        // Live Search — filters grid by name or barcode, and auto-adds on exact barcode match (either automatically on typing, or on Enter key)
+        var isSearchingBarcode = false;
 
-            // On Enter key: check for exact barcode match and add to cart directly
-            if (e.key === 'Enter' || e.keyCode === 13) {
-                var exactMatch = null;
-                $("#product_grid .product-item-wrapper").each(function() {
-                    var code = $(this).data('code').toString();
-                    if (code === value && value !== '') {
-                        exactMatch = $(this);
-                        return false; // break
+        // Auto-add product to cart if exact barcode matches
+        $('#search_product').on('input', function() {
+            if (isSearchingBarcode) return;
+            var value = $(this).val().trim();
+            if (value === '') return;
+
+            var exactMatch = false;
+            $("#product_grid .product-item-wrapper").each(function() {
+                var codeAttr = $(this).data('code');
+                if (codeAttr !== undefined && codeAttr !== null) {
+                    var codes = codeAttr.toString().split(',');
+                    if (codes.includes(value)) {
+                        exactMatch = true;
+                        return false; // break loop
+                    }
+                }
+            });
+
+            if (exactMatch) {
+                isSearchingBarcode = true;
+                $.ajax({
+                    type: "GET",
+                    data: { keyword: value },
+                    url: "{{ route('admin.livesearch') }}",
+                    success: function(response) {
+                        isSearchingBarcode = false;
+                        if (response.status === 'success') {
+                            cart_content();
+                            cart_details();
+                            $('#search_product').val(''); // Clear input
+                            $("#product_grid .product-item-wrapper").show(); // Show all products
+                            toastr.success(response.message || "Product added to cart");
+                        } else if (response.status === 'limitover') {
+                            toastr.error(response.message || "Stock limit over");
+                        }
+                    },
+                    error: function() {
+                        isSearchingBarcode = false;
                     }
                 });
-
-                if (exactMatch) {
-                    // Trigger click on the product card inside the matched wrapper
-                    exactMatch.find('.cart_add').trigger('click');
-                    $(this).val(''); // clear input after scan
-                    // Show all products again
-                    $("#product_grid .product-item-wrapper").show();
-                    return;
-                }
             }
+        });
+
+        $('#search_product').on('keypress', function(e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                if (isSearchingBarcode) return;
+                var value = $(this).val().trim();
+                if (value === '') return;
+
+                isSearchingBarcode = true;
+                // Send to backend to add this barcode item to the cart
+                $.ajax({
+                    type: "GET",
+                    data: { keyword: value },
+                    url: "{{ route('admin.livesearch') }}",
+                    success: function(response) {
+                        isSearchingBarcode = false;
+                        if (response.status === 'success') {
+                            cart_content();
+                            cart_details();
+                            $('#search_product').val(''); // Clear input
+                            $("#product_grid .product-item-wrapper").show(); // Show all products
+                            toastr.success(response.message || "Product added to cart");
+                        } else if (response.status === 'limitover') {
+                            toastr.error(response.message || "Stock limit over");
+                        } else {
+                            toastr.error("Barcode not found");
+                        }
+                    },
+                    error: function() {
+                        isSearchingBarcode = false;
+                        toastr.error("Error adding product");
+                    }
+                });
+            }
+        });
+
+        $('#search_product').on('keyup', function(e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                return;
+            }
+            var value = $(this).val().trim();
+            var valueLower = value.toLowerCase();
 
             // Regular keyup: filter the grid
             $("#product_grid .product-item-wrapper").filter(function() {
                 var nameMatch = $(this).data('name').indexOf(valueLower) > -1;
-                var codeMatch = $(this).data('code').toString().indexOf(value) > -1;
+                
+                var codeAttr = $(this).data('code');
+                var codeMatch = false;
+                if (codeAttr !== undefined && codeAttr !== null) {
+                    var codes = codeAttr.toString().split(',');
+                    codeMatch = codes.some(function(code) {
+                        return code.indexOf(value) > -1;
+                    });
+                }
+                
                 $(this).toggle(nameMatch || codeMatch);
             });
         });

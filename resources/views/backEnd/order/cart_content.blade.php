@@ -20,10 +20,10 @@
         </div>
     </td>
     <td>
-        <div class="input-group input-group-sm" style="width: 100px;">
-            <button class="btn btn-outline-secondary btn-sm cart_decrement" type="button" data-id="{{$value->rowId}}">-</button>
-            <input type="text" class="form-control text-center" value="{{$value->qty}}" readonly style="padding: 0;">
-            <button class="btn btn-outline-secondary btn-sm cart_increment" type="button" data-id="{{$value->rowId}}">+</button>
+        <div class="input-group input-group-sm flex-nowrap" style="width: 80px; margin: 0 auto;">
+            <button class="btn btn-outline-secondary btn-sm cart_decrement px-2" type="button" data-id="{{$value->rowId}}" value="{{$value->qty}}">-</button>
+            <input type="text" class="form-control text-center px-0" value="{{$value->qty}}" readonly style="padding: 0; font-size: 0.85rem;">
+            <button class="btn btn-outline-secondary btn-sm cart_increment px-2" type="button" data-id="{{$value->rowId}}" value="{{$value->qty}}">+</button>
         </div>
     </td>
     <td class="text-end">
