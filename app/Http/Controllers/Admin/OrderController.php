@@ -118,11 +118,12 @@ class OrderController extends Controller
 
     public function product_variable_search(Request $request)
     {
-        $product = Product::with(['variables'])->find($request->id);
+        $product = Product::with(['variables', 'image'])->find($request->id);
         
         if ($product && $product->type == 0) {
             return response()->json([
                 'status' => 'success',
+                'product_image' => ($product->image && $product->image->image) ? asset($product->image->image) : asset('public/images/no-image.png'),
                 'data' => $product->variables
             ]);
         }
