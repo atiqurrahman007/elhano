@@ -71,27 +71,106 @@ class ProductController extends Controller
 
     public function barcode(Request $request)
     {
-        // return $request->all();
-    
         if ($request->keyword) {
-            $data = Product::select('id', 'name', 'status', 'pro_barcode', 'new_price', 'type')->orderBy('id', 'DESC')->where('name', 'LIKE', '%' . $request->keyword . "%")->with('image', 'variables')->get();
-        }else{
-             $data = Product::select('id', 'name', 'status', 'pro_barcode', 'new_price', 'type')->orderBy('id', 'DESC')->get();
+            $data = Product::select('id', 'name', 'status', 'pro_barcode', 'new_price', 'type')
+                ->orderBy('id', 'DESC')
+                ->where('name', 'LIKE', '%' . $request->keyword . "%")
+                ->with('variables')
+                ->get();
+        } else {
+            $data = Product::select('id', 'name', 'status', 'pro_barcode', 'new_price', 'type')
+                ->orderBy('id', 'DESC')
+                ->with('variables')
+                ->get();
         } 
-        // return $data;
+
+        $selected_items = [];
         
-        if($request->product_id  && $request->type == 1){
-            $barcode = Product::select('id', 'name','slug', 'status', 'pro_barcode', 'new_price', 'type')->where('id', $request->product_id)->first();
-            $product = $barcode;
+        // Handle single product quick print link
+        if ($request->product_id) {
+            $type = $request->type ?? 1;
+            $qty = max(1, (int)($request->copies ?? 1));
             
-        }elseif($request->product_id && $request->type == 0){
-            $barcode = ProductVariable::where('id', $request->product_id)->first();  
-            $product = Product::select('id', 'name','slug')->where('id', $barcode->product_id)->first();
-        }else{
-            $barcode = NULL;
-            $product = NULL;
+            if ($type == 1) {
+                $item = Product::select('id', 'name', 'pro_barcode', 'new_price', 'type')->find($request->product_id);
+                if ($item) {
+                    $selected_items[] = [
+                        'id' => $item->id,
+                        'name' => $item->name,
+                        'pro_barcode' => $item->pro_barcode,
+                        'new_price' => $item->new_price,
+                        'size' => null,
+                        'color' => null,
+                        'copies' => $qty,
+                        'type' => 1
+                    ];
+                }
+            } else {
+                $item = ProductVariable::with('product')->find($request->product_id);
+                if ($item && $item->product) {
+                    $selected_items[] = [
+                        'id' => $item->id,
+                        'name' => $item->product->name,
+                        'pro_barcode' => $item->pro_barcode,
+                        'new_price' => $item->new_price,
+                        'size' => $item->size,
+                        'color' => $item->color,
+                        'copies' => $qty,
+                        'type' => 0
+                    ];
+                }
+            }
         }
-        return view('backEnd.product.barcode', compact('data','barcode','product'));
+        
+        // Handle multi-product print batch form submission
+        if ($request->product_ids) {
+            foreach ($request->product_ids as $index => $id) {
+                $type = $request->types[$index] ?? 1;
+                $qty = max(1, (int)($request->copies[$index] ?? 1));
+                
+                // Avoid duplicating if already added by single product quick print
+                $already_added = false;
+                foreach ($selected_items as $sel) {
+                    if ($sel['id'] == $id && $sel['type'] == $type) {
+                        $already_added = true;
+                        break;
+                    }
+                }
+                if ($already_added) continue;
+
+                if ($type == 1) {
+                    $item = Product::select('id', 'name', 'pro_barcode', 'new_price', 'type')->find($id);
+                    if ($item) {
+                        $selected_items[] = [
+                            'id' => $item->id,
+                            'name' => $item->name,
+                            'pro_barcode' => $item->pro_barcode,
+                            'new_price' => $item->new_price,
+                            'size' => null,
+                            'color' => null,
+                            'copies' => $qty,
+                            'type' => 1
+                        ];
+                    }
+                } else {
+                    $item = ProductVariable::with('product')->find($id);
+                    if ($item && $item->product) {
+                        $selected_items[] = [
+                            'id' => $item->id,
+                            'name' => $item->product->name,
+                            'pro_barcode' => $item->pro_barcode,
+                            'new_price' => $item->new_price,
+                            'size' => $item->size,
+                            'color' => $item->color,
+                            'copies' => $qty,
+                            'type' => 0
+                        ];
+                    }
+                }
+            }
+        }
+
+        return view('backEnd.product.barcode', compact('data', 'selected_items'));
     }
 
 
