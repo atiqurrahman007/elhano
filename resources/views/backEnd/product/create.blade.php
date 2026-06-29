@@ -195,7 +195,7 @@
                             <div class="form-group mb-3">
                                 <label for="gender" class="form-label">Select Gender *</label>
                                 <select class="form-control @error('gender') is-invalid @enderror"
-                                    value="{{ old('gender') }}" id="product_type" name="gender">
+                                    value="{{ old('gender') }}" id="gender" name="gender">
                                     <option value="Men">Men</option>
                                     <option value="Women">Women</option>
                                     <option value="Kids">Kids</option>
@@ -279,6 +279,7 @@
                                                 <strong>{{ $message }}</strong>
                                             </span>
                                         @enderror
+                                    </div>
                                 </div>
                                 <!-- col-end -->
                                 <div class="col-sm-3">
