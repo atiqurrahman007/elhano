@@ -50,7 +50,7 @@ class CategoryController extends Controller
         $img->resize($width, $height, function ($constraint) {
             $constraint->aspectRatio();
         });
-        $img->save($imageUrl);
+        $img->save(public_path('uploads/category/' . $name));
         }else{
             $imageUrl = null;
         }
@@ -70,7 +70,7 @@ class CategoryController extends Controller
         $img1->resize($width1, $height1, function ($constraint) {
             $constraint->aspectRatio();
         });
-        $img1->save($imageUrl1);
+        $img1->save(public_path('uploads/category/' . $name1));
         }else{
             $imageUrl1 = null;
         }
@@ -121,7 +121,7 @@ class CategoryController extends Controller
                 $constraint->aspectRatio();
             });
             File::delete($update_data->image);
-            $img->save($imageUrl);
+            $img->save(public_path('uploads/category/' . $name));
             $input['image'] = $imageUrl;
         }else{
             $input['image'] = $update_data->image;
@@ -144,7 +144,7 @@ class CategoryController extends Controller
                 $constraint->aspectRatio();
             });
             File::delete($update_data->banner);
-            $img1->save($imageUrl1);
+            $img1->save(public_path('uploads/category/' . $name1));
             $input['banner'] = $imageUrl1;
         }else{
             $input['banner'] = $update_data->banner;

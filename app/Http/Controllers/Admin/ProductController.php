@@ -222,8 +222,9 @@ class ProductController extends Controller
             $input['old_price'] = $request->old_prices[0];
             $input['new_price'] = $request->new_prices[0];
             $input['stock']     = 0;
+            $input['pro_barcode'] = null;
         }else{
-            $input['pro_barcode'] = $request->pro_barcode??$this->barcode_generate();
+            $input['pro_barcode'] = !empty($request->pro_barcode) ? $request->pro_barcode : $this->barcode_generate();
         }
         $save_data = Product::create($input);
  
@@ -253,7 +254,7 @@ class ProductController extends Controller
             if (is_array($stocks)) {
                 foreach ($stocks as $key => $stock) {
                     $imageUrl = null;
-
+ 
                     if (isset($images[$key]) && $images[$key] != null) {
                         $image = $images[$key];
                         $name = time() . '-' . $image->getClientOriginalName();
@@ -262,7 +263,7 @@ class ProductController extends Controller
                         $image->move($uploadPath, $name);
                         $imageUrl = $uploadPath . $name;
                     }
-
+ 
                     $variable = new ProductVariable();
                     $variable->product_id = $save_data->id;
                     $variable->size = isset($size[$key]) ? $size[$key] : null;
@@ -270,7 +271,7 @@ class ProductController extends Controller
                     $variable->purchase_price = isset($purchase[$key]) ? $purchase[$key] : null;
                     $variable->old_price = isset($old_price[$key]) ? $old_price[$key] : null;
                     $variable->new_price = isset($new_price[$key]) ? $new_price[$key] : null;
-                    $variable->pro_barcode = $pro_barcode[$key]??$this->barcode_generate();
+                    $variable->pro_barcode = (!empty($pro_barcode) && !empty($pro_barcode[$key])) ? $pro_barcode[$key] : $this->barcode_generate();
                     $variable->stock = $stock;
                     $variable->image = $imageUrl;
                     $variable->save();
@@ -355,6 +356,9 @@ class ProductController extends Controller
             $input['old_price'] = $request->up_old_prices ? $request->up_old_prices[0] : ($request->old_prices ? $request->old_prices[0] : 0);
             $input['new_price'] = $request->up_new_prices ? $request->up_new_prices[0] : ($request->new_prices ? $request->new_prices[0] : 0);
             $input['stock']     = 0;
+            $input['pro_barcode'] = null;
+        } else {
+            $input['pro_barcode'] = !empty($request->pro_barcode) ? $request->pro_barcode : ($update_data->pro_barcode ?: $this->barcode_generate());
         }
         
        
@@ -410,7 +414,7 @@ class ProductController extends Controller
                     $upvariable->purchase_price   = $up_purchase[$key];
                     $upvariable->old_price        = $up_old_price ? $up_old_price[$key] : NULL;
                     $upvariable->new_price        = $up_new_price[$key];
-                    $upvariable->pro_barcode      = $up_pro_barcode?$up_pro_barcode[$key]:NULL;
+                    $upvariable->pro_barcode      = (!empty($up_pro_barcode) && !empty($up_pro_barcode[$key])) ? $up_pro_barcode[$key] : ($upvariable->pro_barcode ?: $this->barcode_generate());
                     $upvariable->stock            = $up_stock[$key];
                     $upvariable->image            = $imageUrl;
                     $upvariable->save();
@@ -450,7 +454,7 @@ class ProductController extends Controller
                     $variable->old_price        = $old_price ? $old_price[$key] : NULL;
                     $variable->new_price        = $new_price[$key];
                     $variable->stock            = $stock;
-                    $variable->pro_barcode      = $pro_barcode[$key];
+                    $variable->pro_barcode      = (!empty($pro_barcode) && !empty($pro_barcode[$key])) ? $pro_barcode[$key] : $this->barcode_generate();
                     $variable->image            = $imageUrl;
                     $variable->save();
 

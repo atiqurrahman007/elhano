@@ -279,6 +279,19 @@
                                                 <strong>{{ $message }}</strong>
                                             </span>
                                         @enderror
+                                </div>
+                                <!-- col-end -->
+                                <div class="col-sm-3">
+                                    <div class="form-group mb-3">
+                                        <label for="pro_barcode" class="form-label">Product Barcode</label>
+                                        <input type="text"
+                                            class="form-control @error('pro_barcode') is-invalid @enderror" name="pro_barcode"
+                                            value="{{ old('pro_barcode') }}" id="pro_barcode" />
+                                        @error('pro_barcode')
+                                            <span class="invalid-feedback" role="alert">
+                                                <strong>{{ $message }}</strong>
+                                            </span>
+                                        @enderror
                                     </div>
                                 </div>
                                 <!-- col-end -->

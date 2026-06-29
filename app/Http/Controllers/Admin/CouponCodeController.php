@@ -53,7 +53,7 @@ class CouponCodeController extends Controller
             $img->resize($width, $height, function ($constraint) {
                 $constraint->aspectRatio();
             });
-            $img->save($imageUrl); 
+            $img->save(public_path('uploads/coupon/' . $name)); 
         }else{
             $imageUrl = NULL;
         }
@@ -99,7 +99,7 @@ class CouponCodeController extends Controller
             $img->resize($width, $height, function ($constraint) {
                 $constraint->aspectRatio();
             });
-            $img->save($imageUrl);
+            $img->save(public_path('uploads/coupon/' . $name));
             $input['image'] = $imageUrl;
             File::delete($update_data->image);
         }else{

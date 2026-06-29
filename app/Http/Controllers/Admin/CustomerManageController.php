@@ -73,7 +73,7 @@ class CustomerManageController extends Controller
             $img->resize($width, $height, function ($constraint) {
                 $constraint->aspectRatio();
             });
-            $img->save($imageUrl);
+            $img->save(public_path('uploads/customer/' . $name));
             $input['image'] = $imageUrl;
             File::delete($update_data->image);
         }else{
