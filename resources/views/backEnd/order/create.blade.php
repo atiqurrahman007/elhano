@@ -127,7 +127,14 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="card-title mb-0"><i class="fas fa-shopping-cart me-1"></i> Current Order</h5>
-                        <button type="button" class="btn btn-danger btn-sm cartclear"><i class="fas fa-trash-alt"></i> Clear</button>
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-warning btn-sm text-white" id="hold-order-btn"><i class="fas fa-pause me-1"></i> Hold</button>
+                            <button type="button" class="btn btn-info btn-sm position-relative ms-1 me-1 text-white" id="view-holds-btn">
+                                <i class="fas fa-list me-1"></i> Holds
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="holds-count">0</span>
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm cartclear"><i class="fas fa-trash-alt"></i> Clear</button>
+                        </div>
                     </div>
 
                     <!-- Customer Selection -->
@@ -182,8 +189,18 @@
                             </table>
                         </div>
 
+                        <!-- Discount customization input -->
+                        <div class="row g-2 mt-3">
+                            <div class="col-12">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light fw-semibold text-muted" style="font-size: 0.85rem;"><i class="fas fa-tag me-1"></i> Order Discount (৳)</span>
+                                    <input type="number" id="pos_discount_input" class="form-control text-end fw-bold" value="{{ Session::get('pos_discount') ?? 0 }}" min="0" placeholder="0" style="font-size: 0.9rem;">
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Cart Summary -->
-                        <div class="cart-summary bg-light p-3 mt-3">
+                        <div class="cart-summary bg-light p-3 mt-2">
                             <div id="cart_details">
                                 <!-- Loaded via AJAX -->
                                 @include('backEnd.order.cart_details')
@@ -216,6 +233,37 @@
             <div class="modal-body">
                 <div id="variable_options" class="list-group">
                     <!-- Options will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Holds List Modal -->
+<div class="modal fade" id="holdsModal" tabindex="-1" role="dialog" aria-labelledby="holdsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title text-white" id="holdsModalLabel"><i class="fas fa-pause me-2"></i> Held Orders</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3">Hold Note / ID</th>
+                                <th>Date/Time</th>
+                                <th>Customer</th>
+                                <th>Items</th>
+                                <th>Total</th>
+                                <th class="pe-3 text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="holds-list-tbody">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -498,6 +546,215 @@
                     cart_details();
                 }
             });
+        });
+
+        // ── Cart Discount Event Listener ──
+        $(document).on('change keyup', '#pos_discount_input', function() {
+            var discount = $(this).val();
+            if (discount === '' || discount < 0) discount = 0;
+            $.ajax({
+                url: "{{route('admin.order.pos_discount')}}",
+                data: {discount: discount},
+                success: function(r){
+                    cart_details();
+                }
+            });
+        });
+
+        // ── Holds LocalStorage & UI Event Listeners ──
+        function getHeldOrders() {
+            return JSON.parse(localStorage.getItem('pos_held_orders') || '[]');
+        }
+
+        function saveHeldOrders(holds) {
+            localStorage.setItem('pos_held_orders', JSON.stringify(holds));
+            updateHoldsCount();
+        }
+
+        function updateHoldsCount() {
+            var count = getHeldOrders().length;
+            $('#holds-count').text(count);
+            if (count > 0) {
+                $('#holds-count').removeClass('bg-secondary').addClass('bg-danger');
+            } else {
+                $('#holds-count').removeClass('bg-danger').addClass('bg-secondary');
+            }
+        }
+
+        // Initialize hold counter
+        updateHoldsCount();
+
+        // Click "Hold Order"
+        $('#hold-order-btn').on('click', function() {
+            var cartRows = $('#cartTable tr').not('#empty-table-row');
+            if (cartRows.length === 0 || $('#cartTable').text().indexOf('No products selected') > -1) {
+                toastr.warning("Cart is empty. Cannot hold empty order.");
+                return;
+            }
+
+            var note = prompt("Enter a reference note or customer name to hold this order:");
+            if (note === null) return; 
+            note = note.trim();
+            if (note === "") {
+                note = "Table " + (getHeldOrders().length + 1);
+            }
+
+            $.ajax({
+                type: "GET",
+                url: "{{ route('admin.order.cart_json') }}",
+                dataType: "json",
+                success: function(response) {
+                    if (!response.items || response.items.length === 0) {
+                        toastr.warning("Cart is empty.");
+                        return;
+                    }
+
+                    var holdOrder = {
+                        id: 'hold_' + Date.now(),
+                        note: note,
+                        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                        date: new Date().toLocaleDateString(),
+                        customer: {
+                            name: $('input[name="name"]').val(),
+                            phone: $('input[name="phone"]').val(),
+                            address: $('input[name="address"]').val(),
+                            area: $('#area').val(),
+                            guest: $('#guest_customer').is(':checked')
+                        },
+                        cart: response
+                    };
+
+                    var holds = getHeldOrders();
+                    holds.push(holdOrder);
+                    saveHeldOrders(holds);
+
+                    // Clear active cart & customer fields
+                    $.ajax({
+                        url: "{{route('admin.order.cart_clear')}}",
+                        success: function() {
+                            $('input[name="name"]').val('');
+                            $('input[name="phone"]').val('');
+                            $('input[name="address"]').val('');
+                            $('#area').val('').trigger('change');
+                            $('#guest_customer').prop('checked', false).trigger('change');
+                            $('#pos_discount_input').val(0);
+
+                            cart_content();
+                            cart_details();
+                            toastr.success("Order put on hold successfully!");
+                        }
+                    });
+                },
+                error: function() {
+                    toastr.error("Failed to hold order");
+                }
+            });
+        });
+
+        // Click "View Holds"
+        $('#view-holds-btn').on('click', function() {
+            var holds = getHeldOrders();
+            var tbody = $('#holds-list-tbody');
+            tbody.empty();
+
+            if (holds.length === 0) {
+                tbody.append('<tr><td colspan="6" class="text-center py-4 text-muted">No orders currently on hold.</td></tr>');
+            } else {
+                $.each(holds, function(index, hold) {
+                    var itemsCount = hold.cart.items.length;
+                    var subtotal = parseFloat(hold.cart.pos_shipping || 0);
+                    $.each(hold.cart.items, function(i, item) {
+                        subtotal += (parseFloat(item.price) * parseInt(item.qty));
+                    });
+                    var totalDiscount = parseFloat(hold.cart.pos_discount || 0) + parseFloat(hold.cart.product_discount || 0);
+                    var grandTotal = Math.max(0, subtotal - totalDiscount);
+
+                    var customerName = hold.customer.guest ? '<span class="badge bg-secondary">Guest</span>' : (hold.customer.name || 'N/A');
+                    var customerPhone = hold.customer.phone ? '<br><small class="text-muted">' + hold.customer.phone + '</small>' : '';
+
+                    var tr = '<tr>' +
+                        '<td class="ps-3 fw-bold text-primary">' + hold.note + '</td>' +
+                        '<td>' + hold.date + '<br><small class="text-muted">' + hold.time + '</small></td>' +
+                        '<td>' + customerName + customerPhone + '</td>' +
+                        '<td>' + itemsCount + ' item(s)</td>' +
+                        '<td class="fw-bold">৳ ' + grandTotal.toLocaleString() + '</td>' +
+                        '<td class="pe-3 text-end">' +
+                        '<div class="btn-group btn-group-sm">' +
+                        '<button type="button" class="btn btn-success retrieve-hold-btn text-white" data-id="' + hold.id + '"><i class="fas fa-play me-1"></i> Retrieve</button>' +
+                        '<button type="button" class="btn btn-outline-danger delete-hold-btn" data-id="' + hold.id + '"><i class="fas fa-trash-alt"></i></button>' +
+                        '</div>' +
+                        '</td>' +
+                        '</tr>';
+                    tbody.append(tr);
+                });
+            }
+            $('#holdsModal').modal('show');
+        });
+
+        // Retrieve Hold Order
+        $(document).on('click', '.retrieve-hold-btn', function() {
+            var holdId = $(this).data('id');
+            var holds = getHeldOrders();
+            var hold = holds.find(function(h) { return h.id === holdId; });
+
+            if (!hold) {
+                toastr.error("Hold order not found.");
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "{{ route('admin.order.cart_hold_retrieve') }}",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    items: hold.cart.items,
+                    pos_discount: hold.cart.pos_discount,
+                    pos_shipping: hold.cart.pos_shipping
+                },
+                dataType: "json",
+                success: function(response) {
+                    if (response.status === 'success') {
+                        if (hold.customer.guest) {
+                            $('#guest_customer').prop('checked', true).trigger('change');
+                        } else {
+                            $('#guest_customer').prop('checked', false).trigger('change');
+                            $('input[name="name"]').val(hold.customer.name);
+                            $('input[name="phone"]').val(hold.customer.phone);
+                            $('input[name="address"]').val(hold.customer.address);
+                            $('#area').val(hold.customer.area).trigger('change');
+                        }
+
+                        $('#pos_discount_input').val(hold.cart.pos_discount || 0);
+
+                        cart_content();
+                        cart_details();
+
+                        var newHolds = holds.filter(function(h) { return h.id !== holdId; });
+                        saveHeldOrders(newHolds);
+
+                        $('#holdsModal').modal('hide');
+                        toastr.success("Order retrieved successfully!");
+                    } else {
+                        toastr.error("Failed to retrieve order items.");
+                    }
+                },
+                error: function() {
+                    toastr.error("Server error retrieving order");
+                }
+            });
+        });
+
+        // Delete Hold Order
+        $(document).on('click', '.delete-hold-btn', function() {
+            if (!confirm("Are you sure you want to delete this held order?")) return;
+            
+            var holdId = $(this).data('id');
+            var holds = getHeldOrders();
+            var newHolds = holds.filter(function(h) { return h.id !== holdId; });
+            saveHeldOrders(newHolds);
+
+            $('#view-holds-btn').trigger('click');
+            toastr.success("Held order deleted successfully.");
         });
     });
 

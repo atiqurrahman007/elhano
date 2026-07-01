@@ -186,7 +186,8 @@
         }
 
         .roll-variant {
-            font-size: calc(6px * var(--roll-font-scale));
+            font-size: calc(7.5px * var(--roll-font-scale));
+            font-weight: 700;
             line-height: 1;
             color: #555;
             white-space: nowrap;
@@ -220,7 +221,8 @@
 
         .roll-code {
             font-family: monospace;
-            font-size: calc(6.5px * var(--roll-font-scale));
+            font-size: calc(8.5px * var(--roll-font-scale));
+            font-weight: 900;
             line-height: 1;
             letter-spacing: 0.5px;
             margin: 1px 0 0 0;
@@ -743,8 +745,8 @@
                             {{-- Variant info (only for variant products) --}}
                             @if ($label['type'] == 0)
                                 <div class="roll-variant">
-                                    @if($label['size']) <span>S: <strong>{{ $label['size'] }}</strong></span> @endif
-                                    @if($label['color']) <span style="margin-left:4px">C: <strong>{{ $label['color'] }}</strong></span> @endif
+                                    @if($label['size']) <span>Size: <strong>{{ $label['size'] }}</strong></span> @endif
+                                    @if($label['color']) <span style="margin-left:4px">Color: <strong>{{ $label['color'] }}</strong></span> @endif
                                 </div>
                             @else
                                 <div class="roll-variant">&nbsp;</div>

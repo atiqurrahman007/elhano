@@ -744,6 +744,62 @@ class OrderController extends Controller
         return redirect()->back();
     }
 
+    public function pos_discount(Request $request)
+    {
+        $discount = max(0, floatval($request->discount));
+        Session::put('pos_discount', $discount);
+        return response()->json($discount);
+    }
+
+    public function cart_json()
+    {
+        $content = Cart::instance('sale')->content()->values();
+        return response()->json([
+            'items' => $content,
+            'pos_discount' => Session::get('pos_discount') ?? 0,
+            'pos_shipping' => Session::get('pos_shipping') ?? 0,
+            'product_discount' => Session::get('product_discount') ?? 0,
+        ]);
+    }
+
+    public function cart_hold_retrieve(Request $request)
+    {
+        Cart::instance('sale')->destroy();
+        Session::forget('pos_shipping');
+        Session::forget('pos_discount');
+        Session::forget('product_discount');
+
+        $items = $request->items ?? [];
+        foreach ($items as $item) {
+            Cart::instance('sale')->add([
+                'id' => $item['id'],
+                'name' => $item['name'],
+                'qty' => (int)$item['qty'],
+                'price' => floatval($item['price']),
+                'weight' => 1,
+                'options' => [
+                    'slug' => $item['options']['slug'] ?? '',
+                    'image' => $item['options']['image'] ?? '',
+                    'old_price' => floatval($item['price']),
+                    'purchase_price' => floatval($item['options']['purchase_price'] ?? 0),
+                    'product_size' => $item['options']['product_size'] ?? '',
+                    'product_color' => $item['options']['product_color'] ?? '',
+                    'product_discount' => floatval($item['options']['product_discount'] ?? 0),
+                    'type' => $item['options']['type'] ?? 1
+                ],
+            ]);
+        }
+
+        if ($request->has('pos_discount')) {
+            Session::put('pos_discount', floatval($request->pos_discount));
+        }
+        if ($request->has('pos_shipping')) {
+            Session::put('pos_shipping', floatval($request->pos_shipping));
+        }
+
+        return response()->json(['status' => 'success']);
+    }
+
     public function order_edit($invoice_id){
         $data = Order::where(['id' => $invoice_id])->select('id', 'invoice_id', 'order_status', 'order_type')->with('orderdetails', 'shipping')->first();
         $products = Product::select('id', 'name', 'new_price')->where(['status' => 1])->get();
