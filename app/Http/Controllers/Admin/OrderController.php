@@ -443,8 +443,11 @@ class OrderController extends Controller
     public function order_print(Request $request)
     {
         $orders = Order::whereIn('id', $request->input('order_ids'))->with('orderdetails', 'payment', 'shipping', 'customer')->get();
-        $view = view('backEnd.order.print', ['orders' => $orders])->render();
-        return response()->json(['status' => 'success', 'view' => $view]);
+        if ($request->ajax() || $request->wantsJson()) {
+            $view = view('backEnd.order.print', ['orders' => $orders])->render();
+            return response()->json(['status' => 'success', 'view' => $view]);
+        }
+        return view('backEnd.order.print', ['orders' => $orders]);
     }
     public function bulk_courier($slug, Request $request)
     {
@@ -499,6 +502,7 @@ class OrderController extends Controller
         $shippingcharge = Shippingcharge::where('status', 1)->get();
         Session::put('pos_shipping');
         Session::forget('pos_discount');
+        Session::forget('pos_discount_type');
         Session::forget('product_discount');
         Session::forget('cpaid');
         Session::forget('cdue');
@@ -509,12 +513,35 @@ class OrderController extends Controller
     {
         // return $request->all();
         if ($request->guest_customer) {
-            $this->validate($request, [
-                'guest_customer' => 'required',
-            ]);
             $customer = Customer::find($request->guest_customer);
+            if (!$customer) {
+                $customer = Customer::where('phone', '01700000000')->first();
+            }
+            if (!$customer) {
+                $customer = Customer::first();
+            }
+            if (!$customer) {
+                $customer = new Customer();
+                $customer->name = 'Guest Customer';
+                $customer->phone = '01700000000';
+                $customer->password = bcrypt(rand(100000, 999999));
+                $customer->status = 'active';
+                $customer->save();
+            }
 
             $area = ShippingCharge::where('pos', 1)->first();
+            if (!$area) {
+                $area = ShippingCharge::first();
+            }
+            if (!$area) {
+                $area = new ShippingCharge();
+                $area->name = 'POS Area';
+                $area->amount = 0;
+                $area->pos = 1;
+                $area->status = 1;
+                $area->save();
+            }
+
             $name = $customer->name;
             $phone = $customer->phone;
             $address = $area->name;
@@ -523,13 +550,11 @@ class OrderController extends Controller
             $this->validate($request, [
                 'name' => 'required',
                 'phone' => 'required',
-                'address' => 'required',
-                'area' => 'required',
             ]);
             $name = $request->name;
             $phone = $request->phone;
-            $address = $request->address;
-            $area = $request->area;
+            $address = $request->address ?? 'POS';
+            $area = $request->area ?? 0;
         }
 
         if (Cart::instance('sale')->count() <= 0) {
@@ -540,9 +565,23 @@ class OrderController extends Controller
         $subtotal = Cart::instance('sale')->subtotal();
         $subtotal = str_replace(',', '', $subtotal);
         $subtotal = str_replace('.00', '', $subtotal);
-        $discount = Session::get('pos_discount') + Session::get('product_discount');
+        
+        $pos_discount_val = Session::get('pos_discount') ?? 0;
+        $pos_discount_type = Session::get('pos_discount_type') ?? 'flat';
+        if ($pos_discount_type == 'percent') {
+            $pos_discount = ($subtotal * $pos_discount_val) / 100;
+        } else {
+            $pos_discount = $pos_discount_val;
+        }
+        $discount = $pos_discount + (Session::get('product_discount') ?? 0);
 
         $shipping_area = ShippingCharge::where('id', $area)->first();
+        if (!$shipping_area) {
+            $shipping_area = new ShippingCharge();
+            $shipping_area->id = 0;
+            $shipping_area->name = 'Free Shipping';
+            $shipping_area->amount = 0;
+        }
 
         $exits_customer = Customer::where('phone', $phone)->select('phone', 'id')->first();
         if ($exits_customer) {
@@ -622,10 +661,18 @@ class OrderController extends Controller
         Cart::instance('sale')->destroy();
         Session::forget('sale');
         Session::forget('pos_discount');
+        Session::forget('pos_discount_type');
         Session::forget('product_discount');
         Session::forget('cpaid');
         Session::forget('cdue');
         Toastr::success('Thanks, Your order place successfully', 'Success!');
+        if ($request->ajax()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Order placed successfully',
+                'order_id' => $order->id
+            ]);
+        }
         return redirect()->route('admin.orders', ['slug' => 'all']);
     }
     public function cart_add(Request $request)
@@ -740,6 +787,7 @@ class OrderController extends Controller
         $cartinfo = Cart::instance('sale')->destroy();
         Session::forget('pos_shipping');
         Session::forget('pos_discount');
+        Session::forget('pos_discount_type');
         Session::forget('product_discount');
         return redirect()->back();
     }
@@ -747,8 +795,13 @@ class OrderController extends Controller
     public function pos_discount(Request $request)
     {
         $discount = max(0, floatval($request->discount));
+        $type = $request->type ?? 'flat';
         Session::put('pos_discount', $discount);
-        return response()->json($discount);
+        Session::put('pos_discount_type', $type);
+        return response()->json([
+            'discount' => $discount,
+            'type' => $type
+        ]);
     }
 
     public function cart_json()
@@ -757,6 +810,7 @@ class OrderController extends Controller
         return response()->json([
             'items' => $content,
             'pos_discount' => Session::get('pos_discount') ?? 0,
+            'pos_discount_type' => Session::get('pos_discount_type') ?? 'flat',
             'pos_shipping' => Session::get('pos_shipping') ?? 0,
             'product_discount' => Session::get('product_discount') ?? 0,
         ]);
@@ -792,6 +846,9 @@ class OrderController extends Controller
 
         if ($request->has('pos_discount')) {
             Session::put('pos_discount', floatval($request->pos_discount));
+        }
+        if ($request->has('pos_discount_type')) {
+            Session::put('pos_discount_type', $request->pos_discount_type);
         }
         if ($request->has('pos_shipping')) {
             Session::put('pos_shipping', floatval($request->pos_shipping));
@@ -849,7 +906,15 @@ class OrderController extends Controller
         $subtotal = Cart::instance('sale')->subtotal();
         $subtotal = str_replace(',', '', $subtotal);
         $subtotal = str_replace('.00', '', $subtotal);
-        $discount = Session::get('pos_discount') + Session::get('product_discount');
+        
+        $pos_discount_val = Session::get('pos_discount') ?? 0;
+        $pos_discount_type = Session::get('pos_discount_type') ?? 'flat';
+        if ($pos_discount_type == 'percent') {
+            $pos_discount = ($subtotal * $pos_discount_val) / 100;
+        } else {
+            $pos_discount = $pos_discount_val;
+        }
+        $discount = $pos_discount + (Session::get('product_discount') ?? 0);
         $shipping_area = Shippingcharge::where('id', $request->area)->first();
         $exits_customer = Customer::where('phone', $request->phone)->select('phone', 'id')->first();
         if ($exits_customer) {
@@ -926,6 +991,7 @@ class OrderController extends Controller
         Cart::instance('sale')->destroy();
         Session::forget('pos_shipping');
         Session::forget('pos_discount');
+        Session::forget('pos_discount_type');
         Session::forget('product_discount');
         Session::forget('cpaid');
         Toastr::success('Thanks, Your order place successfully', 'Success!');
