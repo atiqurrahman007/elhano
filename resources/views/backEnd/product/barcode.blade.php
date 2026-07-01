@@ -164,7 +164,7 @@
             border-radius: 4px; /* Rounded corners (Die-Cut) */
             border: 1px dashed rgba(0, 0, 0, 0.15);
             background: #fff;
-            padding: 0.5mm 1mm;
+            padding: 0;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -176,7 +176,7 @@
         }
 
         .roll-brand {
-            font-size: calc(9.5px * var(--roll-font-scale));
+            font-size: calc(11.5px * var(--roll-font-scale));
             font-weight: 900;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -186,7 +186,7 @@
         }
 
         .roll-product-name {
-            font-size: calc(10.5px * var(--roll-font-scale));
+            font-size: calc(13.5px * var(--roll-font-scale));
             font-weight: 800;
             line-height: 1.1;
             white-space: nowrap;
@@ -197,7 +197,7 @@
         }
 
         .roll-variant {
-            font-size: calc(8.5px * var(--roll-font-scale));
+            font-size: calc(11px * var(--roll-font-scale));
             font-weight: 800;
             line-height: 1.1;
             color: #000;
@@ -209,7 +209,7 @@
         }
 
         .roll-price {
-            font-size: calc(13px * var(--roll-font-scale));
+            font-size: calc(16.5px * var(--roll-font-scale));
             font-weight: 900;
             margin: 0;
             line-height: 1.1;
@@ -233,7 +233,7 @@
 
         .roll-code {
             font-family: monospace;
-            font-size: calc(9.5px * var(--roll-font-scale));
+            font-size: calc(11.5px * var(--roll-font-scale));
             font-weight: 900;
             line-height: 1;
             letter-spacing: 0.5px;
@@ -361,7 +361,7 @@
                 align-items: center;
                 text-align: center;
                 gap: 1px;
-                padding: 0.5mm 1mm;
+                padding: 0;
             }
 
             .roll-label:hover {
@@ -411,7 +411,7 @@
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
                 box-sizing: border-box !important;
-                padding: calc(0.5mm + var(--roll-top-margin)) calc(1mm + var(--roll-left-margin)) 0.5mm 1mm !important;
+                padding: var(--roll-top-margin) var(--roll-left-margin) 0 0 !important;
                 border: none !important;
                 box-shadow: none !important;
                 margin: 0 !important;
