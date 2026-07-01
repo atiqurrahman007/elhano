@@ -14,7 +14,7 @@
 
             --roll-top-margin: 0mm;
             --roll-left-margin: 0mm;
-            --roll-barcode-height: 25px;
+            --roll-barcode-height: 28px;
             --roll-font-scale: 1;
         }
 
@@ -164,7 +164,7 @@
             border-radius: 4px; /* Rounded corners (Die-Cut) */
             border: 1px dashed rgba(0, 0, 0, 0.15);
             background: #fff;
-            padding: 2mm 3mm;
+            padding: 0.5mm 1mm;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -172,36 +172,48 @@
             text-align: center;
             overflow: hidden;
             color: #000;
+            gap: 1px;
+        }
+
+        .roll-brand {
+            font-size: calc(9.5px * var(--roll-font-scale));
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0;
+            line-height: 1;
+            width: 100%;
         }
 
         .roll-product-name {
-            font-size: calc(7.5px * var(--roll-font-scale));
-            font-weight: 700;
+            font-size: calc(10.5px * var(--roll-font-scale));
+            font-weight: 800;
             line-height: 1.1;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             width: 100%;
-            margin: 0 0 1px 0;
+            margin: 0;
         }
 
         .roll-variant {
-            font-size: calc(7.5px * var(--roll-font-scale));
-            font-weight: 700;
-            line-height: 1;
-            color: #555;
+            font-size: calc(8.5px * var(--roll-font-scale));
+            font-weight: 800;
+            line-height: 1.1;
+            color: #000;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             width: 100%;
-            margin: 0 0 1px 0;
+            margin: 0;
         }
 
         .roll-price {
-            font-size: calc(8.5px * var(--roll-font-scale));
+            font-size: calc(13px * var(--roll-font-scale));
             font-weight: 900;
-            margin: 0 0 1px 0;
+            margin: 0;
             line-height: 1.1;
+            width: 100%;
         }
 
         .roll-barcode {
@@ -213,7 +225,7 @@
         }
 
         .roll-barcode img {
-            max-width: 100%;
+            max-width: 95%;
             height: var(--roll-barcode-height);
             display: block;
             margin: 0 auto;
@@ -221,11 +233,11 @@
 
         .roll-code {
             font-family: monospace;
-            font-size: calc(8.5px * var(--roll-font-scale));
+            font-size: calc(9.5px * var(--roll-font-scale));
             font-weight: 900;
             line-height: 1;
             letter-spacing: 0.5px;
-            margin: 1px 0 0 0;
+            margin: 0;
         }
 
         /* ── Standard Grid Styles ───────────────────── */
@@ -348,6 +360,8 @@
                 justify-content: center;
                 align-items: center;
                 text-align: center;
+                gap: 1px;
+                padding: 0.5mm 1mm;
             }
 
             .roll-label:hover {
@@ -397,7 +411,7 @@
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
                 box-sizing: border-box !important;
-                padding: calc(2mm + var(--roll-top-margin)) calc(3mm + var(--roll-left-margin)) 2mm 3mm !important;
+                padding: calc(0.5mm + var(--roll-top-margin)) calc(1mm + var(--roll-left-margin)) 0.5mm 1mm !important;
                 border: none !important;
                 box-shadow: none !important;
                 margin: 0 !important;
@@ -408,6 +422,7 @@
                 justify-content: center !important;
                 align-items: center !important;
                 text-align: center !important;
+                gap: 1px !important;
             }
         }
 
@@ -586,8 +601,8 @@
                                     <input type="range" class="form-range roll-calibrator-input" id="roll-left-margin-slider" min="-5" max="5" step="0.1" value="0.0">
                                 </div>
                                 <div class="col-md-3 col-sm-6">
-                                    <label class="form-label mb-1 small fw-semibold">Barcode Height: <span id="roll-barcode-height-val">25</span>px</label>
-                                    <input type="range" class="form-range roll-calibrator-input" id="roll-barcode-height-slider" min="15" max="45" step="1" value="25">
+                                    <label class="form-label mb-1 small fw-semibold">Barcode Height: <span id="roll-barcode-height-val">28</span>px</label>
+                                    <input type="range" class="form-range roll-calibrator-input" id="roll-barcode-height-slider" min="15" max="45" step="1" value="28">
                                 </div>
                                 <div class="col-md-3 col-sm-6">
                                     <label class="form-label mb-1 small fw-semibold">Font Size: <span id="roll-font-scale-val">100</span>%</label>
@@ -739,21 +754,21 @@
                 @foreach ($flat_labels as $label)
                     @if (!$label['is_placeholder'])
                         <div class="roll-label">
+                            {{-- Brand Name --}}
+                            <div class="roll-brand">Elhano</div>
+
                             {{-- Product Name --}}
                             <div class="roll-product-name" title="{{ $label['name'] }}">{{ $label['name'] }}</div>
 
                             {{-- Variant info (only for variant products) --}}
                             @if ($label['type'] == 0)
                                 <div class="roll-variant">
-                                    @if($label['size']) <span>Size: <strong>{{ $label['size'] }}</strong></span> @endif
-                                    @if($label['color']) <span style="margin-left:4px">Color: <strong>{{ $label['color'] }}</strong></span> @endif
+                                    @if($label['size']) <span>Size: {{ $label['size'] }}</span> @endif
+                                    @if($label['color']) <span style="margin-left:6px">Color: {{ $label['color'] }}</span> @endif
                                 </div>
                             @else
                                 <div class="roll-variant">&nbsp;</div>
                             @endif
-
-                            {{-- Price --}}
-                            <div class="roll-price">৳ {{ number_format($label['new_price']) }}</div>
 
                             {{-- Barcode (Code 128) --}}
                             <div class="roll-barcode">
@@ -763,6 +778,9 @@
 
                             {{-- Numeric code under barcode --}}
                             <div class="roll-code">{{ $label['pro_barcode'] }}</div>
+
+                            {{-- Price --}}
+                            <div class="roll-price">Tk. {{ number_format($label['new_price']) }}</div>
                         </div>
                     @endif
                 @endforeach
@@ -1052,7 +1070,7 @@
             var defaultRollCalibration = {
                 topMargin: 0.0,
                 leftMargin: 0.0,
-                barcodeHeight: 25,
+                barcodeHeight: 28,
                 fontScale: 100
             };
 
