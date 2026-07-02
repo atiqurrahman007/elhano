@@ -57,13 +57,17 @@
                                 @else
                                     <div
                                         class="indicator_thumb @if ($details->images->count() > 4) tests @endif">
-                                        @foreach ($details->images as $key => $value)
+                                        @forelse ($details->images as $key => $value)
                                             <div class="indicator-item" data-id="{{ $details->pro_video ? $key: $key }}">
                                                 <img src="{{ asset($value->image) }}" />
                                             </div>
-                                        @endforeach
+                                        @empty
+                                            <div class="indicator-item" data-id="0">
+                                                <img src="{{ asset('public/uploads/notavailable.jpg') }}" />
+                                            </div>
+                                        @endforelse
                                          @if($details->pro_video)
-                                        <div class="indicator-item" data-id="{{$details->images->count()}}">
+                                        <div class="indicator-item" data-id="{{$details->images->count() > 0 ? $details->images->count() : 1}}">
                                             <img src="{{ asset('public/frontEnd/images/youtube-icon.png') }}">
                                         </div>
                                         @endif
@@ -99,11 +103,15 @@
                                         </div>
                                     @else
                                         <div class="details_slider owl-carousel">
-                                            @foreach ($details->images as $value)
+                                            @forelse ($details->images as $value)
                                                 <div class="dimage_item">
                                                     <img src="{{ asset($value->image) }}" class="block__pic" />
                                                 </div>
-                                            @endforeach
+                                            @empty
+                                                <div class="dimage_item">
+                                                    <img src="{{ asset('public/uploads/notavailable.jpg') }}" class="block__pic" />
+                                                </div>
+                                            @endforelse
                                             @if($details->pro_video)
                                             <div class="dimage_item">
                                                 <iframe width="100%" height="315"

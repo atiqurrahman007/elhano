@@ -16,7 +16,9 @@ class Product extends Model
     }
     public function image()
     {
-        return $this->hasOne(Productimage::class, 'product_id')->select('id', 'image', 'product_id');
+        return $this->hasOne(Productimage::class, 'product_id')->select('id', 'image', 'product_id')->withDefault([
+            'image' => 'public/uploads/notavailable.jpg'
+        ]);
     }
     public function images()
     {
