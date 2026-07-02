@@ -690,7 +690,14 @@
                 $.ajax({
                     url: "{{route('admin.order.cart_increment')}}",
                     data: { id: id, qty: qty },
-                    success: function (r) { cart_content(); cart_details(); }
+                    success: function (r) {
+                        if (r.status === 'limitover') {
+                            toastr.error(r.message);
+                        } else {
+                            cart_content();
+                            cart_details();
+                        }
+                    }
                 });
             });
 
@@ -1019,6 +1026,53 @@
             // Trigger auto-fullscreen
             autoFullScreen();
 
+            // ── Full Screen Restoration after Print ──
+            var wasFullscreenBeforePrint = false;
+
+            window.addEventListener('beforeprint', function () {
+                var isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+                if (isFullscreen) {
+                    wasFullscreenBeforePrint = true;
+                }
+            });
+
+            window.addEventListener('afterprint', function () {
+                if (wasFullscreenBeforePrint) {
+                    restoreFullScreen();
+                    wasFullscreenBeforePrint = false;
+                }
+            });
+
+            function restoreFullScreen() {
+                setTimeout(function () {
+                    var isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+                    if (!isFullscreen) {
+                        var promise = null;
+                        if (document.documentElement.requestFullscreen) {
+                            promise = document.documentElement.requestFullscreen();
+                        } else if (document.documentElement.webkitRequestFullscreen) {
+                            promise = document.documentElement.webkitRequestFullscreen();
+                        } else if (document.documentElement.mozRequestFullScreen) {
+                            promise = document.documentElement.mozRequestFullScreen();
+                        } else if (document.documentElement.msRequestFullscreen) {
+                            promise = document.documentElement.msRequestFullscreen();
+                        }
+
+                        if (promise) {
+                            promise.catch(function (err) {
+                                console.log("Fullscreen restoration rejected:", err);
+                                // Fallback: restore on next user interaction (click, keydown, mousedown)
+                                $(document).one('click keydown mousedown', function () {
+                                    if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
+                                        toggleFullScreen();
+                                    }
+                                });
+                            });
+                        }
+                    }
+                }, 300);
+            }
+
             // ── AJAX Order Submission & Auto Print ──
             $(document).on('submit', '.pos_form', function (e) {
                 e.preventDefault();
@@ -1042,20 +1096,38 @@
                         if (response.status === 'success') {
                             toastr.success(response.message || "Order placed successfully!");
 
-                            // Trigger print via background iframe (no new page/tab)
-                            var printFrame = document.getElementById('pos-print-iframe');
-                            if (!printFrame) {
-                                printFrame = document.createElement('iframe');
-                                printFrame.id = 'pos-print-iframe';
-                                printFrame.style.position = 'fixed';
-                                printFrame.style.right = '0';
-                                printFrame.style.bottom = '0';
-                                printFrame.style.width = '0';
-                                printFrame.style.height = '0';
-                                printFrame.style.border = '0';
-                                document.body.appendChild(printFrame);
-                            }
-                            printFrame.src = "{{ url('admin/order-print') }}?order_ids[]=" + response.order_id;
+                             // Trigger print via background iframe (no new page/tab)
+                             var printFrame = document.getElementById('pos-print-iframe');
+                             if (!printFrame) {
+                                 printFrame = document.createElement('iframe');
+                                 printFrame.id = 'pos-print-iframe';
+                                 printFrame.style.position = 'fixed';
+                                 printFrame.style.right = '0';
+                                 printFrame.style.bottom = '0';
+                                 printFrame.style.width = '0';
+                                 printFrame.style.height = '0';
+                                 printFrame.style.border = '0';
+                                 document.body.appendChild(printFrame);
+                             }
+
+                             printFrame.onload = function () {
+                                 if (printFrame.contentWindow) {
+                                     printFrame.contentWindow.addEventListener('beforeprint', function () {
+                                         var isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullscreenElement || document.msFullscreenElement;
+                                         if (isFullscreen) {
+                                             wasFullscreenBeforePrint = true;
+                                         }
+                                     });
+                                     printFrame.contentWindow.addEventListener('afterprint', function () {
+                                         if (wasFullscreenBeforePrint) {
+                                             restoreFullScreen();
+                                             wasFullscreenBeforePrint = false;
+                                         }
+                                     });
+                                 }
+                             };
+
+                             printFrame.src = "{{ url('admin/order-print') }}?order_ids[]=" + response.order_id;
 
                             // Reset customer fields
                             $('input[name="name"]').val('');

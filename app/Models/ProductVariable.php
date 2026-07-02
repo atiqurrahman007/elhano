@@ -9,7 +9,7 @@ class ProductVariable extends Model
 {
     use HasFactory;
     public function product(){
-        return $this->belongsTo(Product::class, 'product_id')->select('id','name','stock','stock_alert','new_price');
+        return $this->belongsTo(Product::class, 'product_id')->select('id','name','stock','stock_alert','new_price','type','slug');
     }
     public function image()
     {

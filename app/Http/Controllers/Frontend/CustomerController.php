@@ -480,12 +480,14 @@ class CustomerController extends Controller
             $order_details->sale_price = $cart->price;
             $order_details->purchase_price = $cart->options->purchase_price;
             $order_details->product_size = $cart->options->product_size;
+            $order_details->product_color = $cart->options->product_color;
             $order_details->sku = $cart->options->sku;
-            $order_details->product_type = $cart->options->type;
+            $order_details->product_type = $cart->options->type ?? (Product::where('id', $cart->id)->value('type') ?? 0);
             $order_details->qty = $cart->qty;
             $order_details->save();
         }
 
+        \App\Service\InventoryService::deductStock($order);
         Cart::instance('shopping')->destroy();
         Session::forget('free_shipping');
         Session::put('purchase_event', 'true');

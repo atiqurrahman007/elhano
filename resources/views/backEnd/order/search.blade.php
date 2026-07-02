@@ -4,19 +4,19 @@
 		@foreach($products as $value)
     @if($value->type == 1)
 		<li>
-			<a data-id="{{$value->id}}" class="cart_add">
+			<a data-id="{{$value->id}}" data-type="{{$value->type}}" class="cart_add">
 				<p class="name">{{$value->name}}</p> 
 				<p  class="price">৳{{$value->new_price}} @if($value->old_price)<del>৳{{$value->old_price}}</del>@endif</p>
-				 <input type="hidden" value="{{$value->type}}" name="type" id="type">
+				 <input type="hidden" value="{{$value->type}}" name="type" class="product_type_val">
 			</a>
 		</li>
     @else
       @foreach($value->variables as $variable)
       <li>
-        <a data-id="{{$value->id}}" data-size="{{$variable->size}}" data-color="{{$variable->color}}" class="cart_add">
+        <a data-id="{{$value->id}}" data-size="{{$variable->size}}" data-color="{{$variable->color}}" data-type="{{$value->type}}" class="cart_add">
           <p class="name">{{$value->name}} @if($variable->size)- {{$variable->size}} @endif @if($variable->color) - {{$variable->color}} @endif - {{$variable->stock}}</p> 
           <p  class="price">৳{{$variable->new_price}} @if($variable->old_price)<del>৳{{$variable->old_price}}</del>@endif</p>
-           <input type="hidden" value="{{$value->type}}" name="type" id="type">
+           <input type="hidden" value="{{$value->type}}" name="type" class="product_type_val">
         </a>
       </li>
       @endforeach
@@ -70,7 +70,7 @@
   var id = $(this).data('id');
   var color = $(this).data('color');
   var size = $(this).data('size');
-  var type = $('#type').val();
+  var type = $(this).data('type');
   if (id) {
    $.ajax({
     cache: "false",

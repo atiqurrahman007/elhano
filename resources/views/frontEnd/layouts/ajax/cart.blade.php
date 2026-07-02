@@ -90,3 +90,9 @@
             class="border-0 shadow-none btn btn-theme" />
     </div>
 </form>
+
+@if(session('error') || isset($error))
+<script>
+    toastr.error("{{ session('error') ?? $error }}");
+</script>
+@endif

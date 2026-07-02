@@ -9,6 +9,15 @@ class Order extends Model
 {
     use HasFactory;
 
+    protected static function booted()
+    {
+        static::deleting(function ($order) {
+            if (\App\Service\InventoryService::isDeductedStatus($order->order_status)) {
+                \App\Service\InventoryService::revertStock($order);
+            }
+        });
+    }
+
     public function orderdetails()
     {
         return $this->hasMany(OrderDetails::class, 'order_id');

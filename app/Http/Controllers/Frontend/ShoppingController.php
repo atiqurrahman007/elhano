@@ -124,6 +124,9 @@ class ShoppingController extends Controller
         }
         if ($stock < $cart_qty) {
             Toastr::error('Product stock limit over', 'Failed!');
+            if ($request->ajax()) {
+                return response()->json(['status' => 'error', 'message' => 'Product stock limit over']);
+            }
             return back();
         }
         $find_coupon = CouponCode::select('id','category_id')->where('category_id',$product->category_id)->first();
@@ -187,7 +190,31 @@ class ShoppingController extends Controller
     public function cart_increment(Request $request)
     {
         $item = Cart::instance('shopping')->get($request->id);
+        if (!$item) {
+            $data = Cart::instance('shopping')->content();
+            $this->coupon_check();
+            return view('frontEnd.layouts.ajax.cart', compact('data'));
+        }
+
+        $product = Product::find($item->id);
+        if ($item->options->type == 0) {
+            $var_product = ProductVariable::where([
+                'product_id' => $item->id,
+                'color' => $item->options->product_color,
+                'size' => $item->options->product_size
+            ])->first();
+            $stock = $var_product ? $var_product->stock : 0;
+        } else {
+            $stock = $product ? $product->stock : 0;
+        }
+
         $qty = $item->qty + 1;
+        if ($qty > $stock) {
+            $data = Cart::instance('shopping')->content();
+            $this->coupon_check();
+            return view('frontEnd.layouts.ajax.cart', compact('data'))->with('error', 'Product stock limit over');
+        }
+
         $increment = Cart::instance('shopping')->update($request->id, $qty);
         $data = Cart::instance('shopping')->content();
         $this->coupon_check();
@@ -218,7 +245,29 @@ class ShoppingController extends Controller
     public function cart_increment_camp(Request $request)
     {
         $item = Cart::instance('shopping')->get($request->id);
+        if (!$item) {
+            $data = Cart::instance('shopping')->content();
+            return view('frontEnd.layouts.ajax.cart_camp', compact('data'));
+        }
+
+        $product = Product::find($item->id);
+        if ($item->options->type == 0) {
+            $var_product = ProductVariable::where([
+                'product_id' => $item->id,
+                'color' => $item->options->product_color,
+                'size' => $item->options->product_size
+            ])->first();
+            $stock = $var_product ? $var_product->stock : 0;
+        } else {
+            $stock = $product ? $product->stock : 0;
+        }
+
         $qty = $item->qty + 1;
+        if ($qty > $stock) {
+            $data = Cart::instance('shopping')->content();
+            return view('frontEnd.layouts.ajax.cart_camp', compact('data'))->with('error', 'Product stock limit over');
+        }
+
         $increment = Cart::instance('shopping')->update($request->id, $qty);
         $data = Cart::instance('shopping')->content();
         return view('frontEnd.layouts.ajax.cart_camp', compact('data'));

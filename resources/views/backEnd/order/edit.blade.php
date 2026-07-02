@@ -250,23 +250,28 @@
             });
         }
        });
-    $(".cart_increment").click(function(e){
-        e.preventDefault();
-        var id = $(this).data("id");
-        var qty = $(this).val();
-        if(id){
-              $.ajax({
-               cache: false,
-               data:{'id':id,'qty':qty},
-               type:"GET",
-               url:"{{route('admin.order.cart_increment')}}",
-               dataType: "json",
-            success: function(cartinfo){
-                return cart_content()+cart_details();
-            }
-          });
-        }
-   });
+     $(".cart_increment").click(function(e){
+         e.preventDefault();
+         var id = $(this).data("id");
+         var qty = $(this).val();
+         if(id){
+               $.ajax({
+                cache: false,
+                data:{'id':id,'qty':qty},
+                type:"GET",
+                url:"{{route('admin.order.cart_increment')}}",
+                dataType: "json",
+             success: function(r){
+                 if (r.status === 'limitover') {
+                     toastr.error(r.message);
+                 } else {
+                     cart_content();
+                     cart_details();
+                 }
+             }
+           });
+         }
+    });
     $(".cart_decrement").click(function(e){
         e.preventDefault();
         var id = $(this).data("id");

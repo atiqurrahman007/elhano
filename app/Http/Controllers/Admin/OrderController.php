@@ -59,12 +59,12 @@ class OrderController extends Controller
             $new_price = $product ? $product->new_price : $var_product->new_price;
             $stock = $product ? $product->stock : $var_product->stock;
             $product_id = $product ? $product->id : $var_product->product_id;
-            $product_name = $product ? $product->name : $var_product->product->name;
-            $product_slug = $product ? $product->slug : $var_product->product->slug;
+            $product_name = $product ? $product->name : ($var_product->product ? $var_product->product->name : '');
+            $product_slug = $product ? $product->slug : ($var_product->product ? $var_product->product->slug : '');
             $product_image = $product 
                 ? ($product->image ? $product->image->image : null) 
-                : ($var_product->product && $var_product->product->image ? $var_product->product->image->image : null);
-            $product_type = $product ? $product->type : $var_product->product->type;
+                : (($var_product->product && $var_product->product->image) ? $var_product->product->image->image : null);
+            $product_type = $product ? $product->type : ($var_product->product ? $var_product->product->type : 0);
             $product_size = $var_product->size ?? null;
             $product_color = $var_product->color ?? null;
 
@@ -344,20 +344,7 @@ class OrderController extends Controller
         //         $responseData = json_decode($response->getBody(), true);
         //     }
         // }
-        if ($request->status == 6 && $order_status != 6) {
-            $orders_details = OrderDetails::where('order_id', $order->id)->get();
-            foreach ($orders_details as $order_detail) {
-                if ($order_detail->type == 1) {
-                    $product = Product::find($order_detail->product_id);
-                    $product->stock -= $order_detail->qty;
-                    $product->save();
-                } else {
-                    $product = ProductVariable::where(['product_id' => $order_detail->product_id, 'color' => $order_detail->product_color, 'size' => $order_detail->product_size])->first();
-                    $product->stock -= $order_detail->qty;
-                    $product->save();
-                }
-            }
-        }
+        \App\Service\InventoryService::adjustStockForStatusChange($order, $order_status, $request->status);
 
 
         Toastr::success('Success', 'Order status change successfully');
@@ -376,10 +363,8 @@ class OrderController extends Controller
             $order->save();
         }
 
-        if ($order->order_status == 5) {
-            $product = Product::select('id', 'name', 'stock')->find($order_detail->product_id);
-            $product->stock += $order_detail->qty;
-            $product->save();
+        if (\App\Service\InventoryService::isDeductedStatus($order->order_status)) {
+            \App\Service\InventoryService::returnItemStock($order_detail);
         }
 
         Toastr::success('Success', 'Order item return successfully');
@@ -388,7 +373,10 @@ class OrderController extends Controller
 
     public function destroy(Request $request)
     {
-        $order = Order::where('id', $request->id)->delete();
+        $order = Order::find($request->id);
+        if ($order) {
+            $order->delete();
+        }
         $order_details = OrderDetails::where('order_id', $request->id)->delete();
         $shipping = Shipping::where('order_id', $request->id)->delete();
         $payment = Payment::where('order_id', $request->id)->delete();
@@ -404,26 +392,15 @@ class OrderController extends Controller
 
     public function order_status(Request $request)
     {
-        // return $request->all();
-        $orders = Order::whereIn('id', $request->input('order_ids'))->update(['order_status' => $request->order_status]);
-
-        if ($request->order_status == 6) {
-            $orders = Order::whereIn('id', $request->input('order_ids'))->with('payment')->get();
+        $orderIds = $request->input('order_ids');
+        if (is_array($orderIds) && count($orderIds) > 0) {
+            $orders = Order::whereIn('id', $orderIds)->get();
             foreach ($orders as $order) {
-                $orders_details = OrderDetails::where('order_id', $order->id)->get();
+                $oldStatus = $order->order_status;
+                $order->order_status = $request->order_status;
+                $order->save();
 
-                foreach ($orders_details as $order_detail) {
-
-                    if ($order_detail->product_type == 1) {
-                        $product = Product::find($order_detail->product_id);
-                        $product->stock -= $order_detail->qty;
-                        $product->save();
-                    } else {
-                        $product = ProductVariable::where(['product_id' => $order_detail->product_id, 'color' => $order_detail->product_color, 'size' => $order_detail->product_size])->first();
-                        $product->stock -= $order_detail->qty;
-                        $product->save();
-                    }
-                }
+                \App\Service\InventoryService::adjustStockForStatusChange($order, $oldStatus, $request->order_status);
             }
         }
         return response()->json(['status' => 'success', 'message' => 'Order status change successfully']);
@@ -433,7 +410,10 @@ class OrderController extends Controller
     {
         $orders_id = $request->order_ids;
         foreach ($orders_id as $order_id) {
-            $order = Order::where('id', $order_id)->delete();
+            $order = Order::find($order_id);
+            if ($order) {
+                $order->delete();
+            }
             $order_details = OrderDetails::where('order_id', $order_id)->delete();
             $shipping = Shipping::where('order_id', $order_id)->delete();
             $payment = Payment::where('order_id', $order_id)->delete();
@@ -644,20 +624,12 @@ class OrderController extends Controller
             $order_details->sale_price = $cart->price;
             $order_details->product_color = $cart->options->product_color;
             $order_details->product_size = $cart->options->product_size;
-            $order_details->product_type = $cart->options->type;
+            $order_details->product_type = $cart->options->type ?? (Product::where('id', $cart->id)->value('type') ?? 0);
             $order_details->qty = $cart->qty;
             $order_details->save();
-            // return  $order_details;
-            if ($order_details->product_type == 1) {
-                $product = Product::find($order_details->product_id);
-                $product->stock -= $order_details->qty;
-                $product->save();
-            } else {
-                $product = ProductVariable::where(['product_id' => $order_details->product_id])->orWhere('color',$order_details->product_color)->first();
-                $product->stock -= $order_details->qty;
-                $product->save();
-            }
         }
+
+        \App\Service\InventoryService::deductStock($order);
         Cart::instance('sale')->destroy();
         Session::forget('sale');
         Session::forget('pos_discount');
@@ -740,7 +712,31 @@ class OrderController extends Controller
     }
     public function cart_increment(Request $request)
     {
+        $item = Cart::instance('sale')->get($request->id);
+        if (!$item) {
+            return response()->json(['status' => 'error', 'message' => 'Item not found']);
+        }
+        
+        $product = Product::find($item->id);
+        if ($product->type == 0) {
+            $var_product = ProductVariable::where([
+                'product_id' => $item->id,
+                'color' => $item->options->product_color,
+                'size' => $item->options->product_size
+            ])->first();
+            $stock = $var_product ? $var_product->stock : 0;
+        } else {
+            $stock = $product->stock;
+        }
+        
         $qty = $request->qty + 1;
+        if ($qty > $stock) {
+            return response()->json([
+                'status' => 'limitover',
+                'message' => 'Product stock limit over'
+            ]);
+        }
+
         $cartinfo = Cart::instance('sale')->update($request->id, $qty);
         return response()->json($cartinfo);
     }
@@ -962,6 +958,11 @@ class OrderController extends Controller
         $payment->save();
 
         // order details data save
+        $isDeducted = \App\Service\InventoryService::isDeductedStatus($order->order_status);
+        if ($isDeducted) {
+            \App\Service\InventoryService::revertStock($order);
+        }
+
         foreach ($order->orderdetails as $orderdetail) {
             $item = Cart::instance('sale')->content()->where('id', $orderdetail->product_id)->first();
             if (!$item) {
@@ -985,8 +986,16 @@ class OrderController extends Controller
                 $order_details->product_discount = $cart->options->product_discount;
                 $order_details->sale_price = $cart->price;
                 $order_details->qty = $cart->qty;
+                $order_details->product_size = $cart->options->product_size;
+                $order_details->product_color = $cart->options->product_color;
+                $order_details->product_type = $cart->options->type ?? (Product::where('id', $cart->id)->value('type') ?? 0);
                 $order_details->save();
             }
+        }
+
+        $order->load('orderdetails');
+        if ($isDeducted) {
+            \App\Service\InventoryService::deductStock($order);
         }
         Cart::instance('sale')->destroy();
         Session::forget('pos_shipping');

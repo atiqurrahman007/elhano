@@ -65,3 +65,9 @@
     </tfoot>
 </table>
 
+@if(session('error') || isset($error))
+<script>
+    toastr.error("{{ session('error') ?? $error }}");
+</script>
+@endif
+
