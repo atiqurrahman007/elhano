@@ -23,6 +23,11 @@
     <!-- Head js -->
     @yield('css')
     <script src="{{ asset('public/backEnd/') }}/assets/js/head.js"></script>
+    <style>
+        .content-page {
+            margin-top: 70px !important;
+        }
+    </style>
 </head>
 
 <!-- body start -->
@@ -34,153 +39,158 @@
     <div id="wrapper">
         <!-- Topbar Start -->
         <div class="navbar-custom">
-                <div class="container-fluid">
-                    <ul class="list-unstyled topnav-menu float-end mb-0">
-                        <li class="dropdown d-inline-block d-lg-none">
-                            <a  href="{{route('admin.order.create')}}" class="nav-link dropdown-toggle arrow-none waves-effect waves-light">
-                                <i class="fe-shopping-cart noti-icon"></i>
-                            </a>
-                        </li>
+            <div class="container-fluid">
+                <ul class="list-unstyled topnav-menu float-end mb-0">
+                    <li class="dropdown d-inline-block d-lg-none">
+                        <a href="{{route('admin.order.create')}}"
+                            class="nav-link dropdown-toggle arrow-none waves-effect waves-light">
+                            <i class="fe-shopping-cart noti-icon"></i>
+                        </a>
+                    </li>
 
-                        <li class="dropdown d-none d-lg-inline-block">
-                            <a class="nav-link dropdown-toggle arrow-none waves-effect waves-light" data-toggle="fullscreen"
-                                href="#">
-                                <i class="fe-maximize noti-icon"></i>
-                            </a>
-                        </li>
+                    <li class="dropdown d-none d-lg-inline-block">
+                        <a class="nav-link dropdown-toggle arrow-none waves-effect waves-light" data-toggle="fullscreen"
+                            href="#">
+                            <i class="fe-maximize noti-icon"></i>
+                        </a>
+                    </li>
 
-                        <li class="dropdown notification-list topbar-dropdown">
-                            <a class="nav-link dropdown-toggle waves-effect waves-light" data-bs-toggle="dropdown"
-                                href="#" role="button" aria-haspopup="false" aria-expanded="false">
-                                <i class="fe-bell noti-icon"></i>
-                                <span class="badge bg-danger rounded-circle noti-icon-badge">{{ $neworder }}</span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end dropdown-lg">
-                                <!-- item-->
-                                <div class="dropdown-item noti-title">
-                                    <h5 class="m-0">
-                                        <span class="float-end">
-                                            <a href="{{ route('admin.orders', ['slug' => 'pending']) }}" class="text-dark">
-                                                <small>View All</small>
-                                            </a>
-                                        </span>
-                                        Orders
-                                    </h5>
-                                </div>
-
-                                <div class="noti-scroll" data-simplebar>
-                                    @foreach ($pendingorder as $porder)
-                                        <!-- item-->
-                                        <a href="{{ route('admin.orders', ['slug' => 'pending']) }}"
-                                            class="dropdown-item notify-item active">
-                                            <div class="notify-icon">
-                                                <img src="{{ asset($porder->customer ? $porder->customer->image : '') }}"
-                                                    class="img-fluid rounded-circle" alt="" />
-                                            </div>
-                                            <p class="notify-details">
-                                                {{ $porder->customer ? $porder->customer->name : '' }}
-                                            </p>
-                                            <p class="text-muted mb-0 user-msg">
-                                                <small>Invoice : {{ $porder->invoice_id }}</small>
-                                            </p>
+                    <li class="dropdown notification-list topbar-dropdown">
+                        <a class="nav-link dropdown-toggle waves-effect waves-light" data-bs-toggle="dropdown" href="#"
+                            role="button" aria-haspopup="false" aria-expanded="false">
+                            <i class="fe-bell noti-icon"></i>
+                            <span class="badge bg-danger rounded-circle noti-icon-badge">{{ $neworder }}</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-lg">
+                            <!-- item-->
+                            <div class="dropdown-item noti-title">
+                                <h5 class="m-0">
+                                    <span class="float-end">
+                                        <a href="{{ route('admin.orders', ['slug' => 'pending']) }}" class="text-dark">
+                                            <small>View All</small>
                                         </a>
-                                    @endforeach
+                                    </span>
+                                    Orders
+                                </h5>
+                            </div>
 
+                            <div class="noti-scroll" data-simplebar>
+                                @foreach ($pendingorder as $porder)
                                     <!-- item-->
-                                </div>
+                                    <a href="{{ route('admin.orders', ['slug' => 'pending']) }}"
+                                        class="dropdown-item notify-item active">
+                                        <div class="notify-icon">
+                                            <img src="{{ asset($porder->customer ? $porder->customer->image : '') }}"
+                                                class="img-fluid rounded-circle" alt="" />
+                                        </div>
+                                        <p class="notify-details">
+                                            {{ $porder->customer ? $porder->customer->name : '' }}
+                                        </p>
+                                        <p class="text-muted mb-0 user-msg">
+                                            <small>Invoice : {{ $porder->invoice_id }}</small>
+                                        </p>
+                                    </a>
+                                @endforeach
 
-                                <!-- All-->
-                                <a href="{{ route('admin.orders', ['slug' => 'pending']) }}"
-                                    class="dropdown-item text-center text-primary notify-item notify-all">
-                                    View all
-                                    <i class="fe-arrow-right"></i>
-                                </a>
+                                <!-- item-->
                             </div>
-                        </li>
 
-                        <li class="dropdown notification-list topbar-dropdown">
-                            <a class="nav-link dropdown-toggle nav-user me-0 waves-effect waves-light"
-                                data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="false"
-                                aria-expanded="false">
-                                <img src="{{ asset(Auth::user()->image) }}" alt="user-image" class="rounded-circle" />
+                            <!-- All-->
+                            <a href="{{ route('admin.orders', ['slug' => 'pending']) }}"
+                                class="dropdown-item text-center text-primary notify-item notify-all">
+                                View all
+                                <i class="fe-arrow-right"></i>
                             </a>
-                            <div class="dropdown-menu dropdown-menu-end profile-dropdown">
-                                <!-- item-->
-                                <div class="dropdown-header noti-title">
-                                    <h6 class="text-overflow m-0">Welcome !</h6>
-                                </div>
+                        </div>
+                    </li>
 
-                                <!-- item-->
-                                <a href="{{ route('dashboard') }}" class="dropdown-item notify-item">
-                                    <i class="fe-user"></i>
-                                    <span>Dashboard</span>
-                                </a>
-
-                                <!-- item-->
-                                <a href="{{ route('change_password') }}" class="dropdown-item notify-item">
-                                    <i class="fe-settings"></i>
-                                    <span>Change Password</span>
-                                </a>
-
-                                <!-- item-->
-                                <a href="{{ route('locked') }}" class="dropdown-item notify-item">
-                                    <i class="fe-lock"></i>
-                                    <span>Lock Screen</span>
-                                </a>
-
-                                <div class="dropdown-divider"></div>
-
-                                <!-- item-->
-                                <a href="{{ route('logout') }}"
-                                    onclick="event.preventDefault();
-                      document.getElementById('logout-form').submit();"
-                                    class="dropdown-item notify-item">
-                                    <i class="fe-log-out me-1"></i>
-                                    <span>Logout</span>
-                                </a>
-                                <form id="logout-form" action="{{ route('logout') }}" method="POST"
-                                    style="display: none;">
-                                    @csrf
-                                </form>
+                    <li class="dropdown notification-list topbar-dropdown">
+                        <a class="nav-link dropdown-toggle nav-user me-0 waves-effect waves-light"
+                            data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="false"
+                            aria-expanded="false">
+                            <img src="{{ asset(Auth::user()->image) }}" alt="user-image" class="rounded-circle" />
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end profile-dropdown">
+                            <!-- item-->
+                            <div class="dropdown-header noti-title">
+                                <h6 class="text-overflow m-0">Welcome !</h6>
                             </div>
-                        </li>
-                    </ul>
 
-                    <!-- LOGO -->
-                    <ul class="list-unstyled topnav-menu topnav-menu-left m-0">
-                        <li>
-                            <button class="button-menu-mobile waves-effect waves-light">
-                                <i class="fe-menu"></i>
-                            </button>
-                        </li>
-
-                        <li>
-                            <!-- Mobile menu toggle (Horizontal Layout)-->
-                            <a class="navbar-toggle nav-link" data-bs-toggle="collapse"
-                                data-bs-target="#topnav-menu-content">
-                                <div class="lines">
-                                    <span></span>
-                                    <span></span>
-                                    <span></span>
-                                </div>
+                            <!-- item-->
+                            <a href="{{ route('dashboard') }}" class="dropdown-item notify-item">
+                                <i class="fe-user"></i>
+                                <span>Dashboard</span>
                             </a>
-                            <!-- End mobile menu toggle-->
-                        </li>
 
-                        <li class="dropdown d-none d-xl-block">
-                            <a class="nav-link dropdown-toggle waves-effect waves-light " href="{{ route('home') }}"
-                                target="_blank"> <span class="btn btn-success waves-effect waves-light  rounded-pill"> <i data-feather="airplay"></i> Visit Site</span> </a>
-                        </li>
-                        <li class="dropdown d-none d-xl-block">
-                            <a class="nav-link dropdown-toggle waves-effect waves-light " href="{{ route('admin.order.create') }}"> <span class="btn btn-primary waves-effect waves-light  rounded-pill"> <i data-feather="shopping-cart"></i> POS</span> </a>
-                        </li>
-                        <li class="dropdown d-none d-xl-block">
-                            <a class="nav-link dropdown-toggle waves-effect waves-light " href="{{ route('campaign.index') }}"> <span class="btn btn-pink waves-effect waves-light  rounded-pill"> <i data-feather="layout"></i> Landing Page</span> </a>
-                        </li>
-                    </ul>
-                    <div class="clearfix"></div>
-                </div>
+                            <!-- item-->
+                            <a href="{{ route('change_password') }}" class="dropdown-item notify-item">
+                                <i class="fe-settings"></i>
+                                <span>Change Password</span>
+                            </a>
+
+                            <!-- item-->
+                            <a href="{{ route('locked') }}" class="dropdown-item notify-item">
+                                <i class="fe-lock"></i>
+                                <span>Lock Screen</span>
+                            </a>
+
+                            <div class="dropdown-divider"></div>
+
+                            <!-- item-->
+                            <a href="{{ route('logout') }}" onclick="event.preventDefault();
+                      document.getElementById('logout-form').submit();" class="dropdown-item notify-item">
+                                <i class="fe-log-out me-1"></i>
+                                <span>Logout</span>
+                            </a>
+                            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                                @csrf
+                            </form>
+                        </div>
+                    </li>
+                </ul>
+
+                <!-- LOGO -->
+                <ul class="list-unstyled topnav-menu topnav-menu-left m-0">
+                    <li>
+                        <button class="button-menu-mobile waves-effect waves-light">
+                            <i class="fe-menu"></i>
+                        </button>
+                    </li>
+
+                    <li>
+                        <!-- Mobile menu toggle (Horizontal Layout)-->
+                        <a class="navbar-toggle nav-link" data-bs-toggle="collapse"
+                            data-bs-target="#topnav-menu-content">
+                            <div class="lines">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </a>
+                        <!-- End mobile menu toggle-->
+                    </li>
+
+                    <li class="dropdown d-none d-xl-block">
+                        <a class="nav-link dropdown-toggle waves-effect waves-light " href="{{ route('home') }}"
+                            target="_blank"> <span class="btn btn-success waves-effect waves-light  rounded-pill"> <i
+                                    data-feather="airplay"></i> Visit Site</span> </a>
+                    </li>
+                    <li class="dropdown d-none d-xl-block">
+                        <a class="nav-link dropdown-toggle waves-effect waves-light "
+                            href="{{ route('admin.order.create') }}"> <span
+                                class="btn btn-primary waves-effect waves-light  rounded-pill"> <i
+                                    data-feather="shopping-cart"></i> POS</span> </a>
+                    </li>
+                    <li class="dropdown d-none d-xl-block">
+                        <a class="nav-link dropdown-toggle waves-effect waves-light "
+                            href="{{ route('campaign.index') }}"> <span
+                                class="btn btn-pink waves-effect waves-light  rounded-pill"> <i
+                                    data-feather="layout"></i> Landing Page</span> </a>
+                    </li>
+                </ul>
+                <div class="clearfix"></div>
             </div>
+        </div>
         <!-- end Topbar -->
 
         <!-- ========== Left Sidebar Start ========== -->
@@ -188,7 +198,8 @@
             <div class="h-100" data-simplebar>
                 <!-- User box -->
                 <div class="user-box text-center">
-                    <img src="{{ asset('public/backEnd/') }}/assets/images/users/user-1.jpg" alt="user-img" class="rounded-circle avatar-md" />
+                    <img src="{{ asset('public/backEnd/') }}/assets/images/users/user-1.jpg" alt="user-img"
+                        class="rounded-circle avatar-md" />
                     <div class="dropdown">
                         <a href="javascript: void(0);" class="text-dark dropdown-toggle h5 mt-2 mb-1 d-block"
                             data-bs-toggle="dropdown">{{ Auth::user()->name }}</a>
@@ -212,15 +223,13 @@
                             </a>
 
                             <!-- item-->
-                            <a href="{{ route('logout') }}"
-                                onclick="event.preventDefault();
+                            <a href="{{ route('logout') }}" onclick="event.preventDefault();
                                                      document.getElementById('logout-form').submit();"
                                 class="dropdown-item notify-item">
                                 <i class="fe-log-out me-1"></i>
                                 <span>Logout</span>
                             </a>
-                            <form id="logout-form" action="{{ route('logout') }}" method="POST"
-                                style="display: none;">
+                            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                                 @csrf
                             </form>
                         </div>
@@ -276,7 +285,8 @@
                                     <li>
                                         <a href="{{ route('products.index') }}"><i data-feather="minus"></i>
                                             Product Manage</a>
-                                    </li><li>
+                                    </li>
+                                    <li>
                                         <a href="{{ route('products.sort') }}"><i data-feather="minus"></i>
                                             Product Sort</a>
                                     </li>
@@ -289,8 +299,8 @@
                                             Subcategories</a>
                                     </li>
                                     <li>
-                                        <a href="{{ route('childcategories.index') }}"><i
-                                                data-feather="minus"></i> Childcategories</a>
+                                        <a href="{{ route('childcategories.index') }}"><i data-feather="minus"></i>
+                                            Childcategories</a>
                                     </li>
                                     <li>
                                         <a href="{{ route('brands.index') }}"><i data-feather="minus"></i>
@@ -325,10 +335,12 @@
                             <div class="collapse" id="siebar-purchase">
                                 <ul class="nav-second-level">
                                     <li>
-                                        <a href="{{ route('products.purchase_create') }}"><i data-feather="minus"></i>New Purchase</a>
+                                        <a href="{{ route('products.purchase_create') }}"><i
+                                                data-feather="minus"></i>New Purchase</a>
                                     </li>
                                     <li>
-                                        <a href="{{ route('products.purchase') }}"><i data-feather="minus"></i>Purchase List</a>
+                                        <a href="{{ route('products.purchase') }}"><i data-feather="minus"></i>Purchase
+                                            List</a>
                                     </li>
                                 </ul>
                             </div>
@@ -422,16 +434,17 @@
                                             Contact</a>
                                     </li>
                                     <li>
-                                        <a href="{{ route('districts.index') }}"><i
-                                                data-feather="minus"></i> Shipping Charge</a>
+                                        <a href="{{ route('districts.index') }}"><i data-feather="minus"></i> Shipping
+                                            Charge</a>
                                     </li>
                                     <li>
                                         <a href="{{ route('orderstatus.index') }}"><i data-feather="minus"></i>
                                             Order Status</a>
                                     </li>
-                                    
+
                                     <li>
-                                        <a href="{{ route('pages.index') }}"><i data-feather="minus"></i> Create Page</a>
+                                        <a href="{{ route('pages.index') }}"><i data-feather="minus"></i> Create
+                                            Page</a>
                                     </li>
                                 </ul>
                             </div>
@@ -450,8 +463,8 @@
                                             Courier API</a>
                                     </li>
                                     <li>
-                                        <a href="{{ route('paymentgeteway.manage') }}"><i
-                                                data-feather="minus"></i> Payment Gateway</a>
+                                        <a href="{{ route('paymentgeteway.manage') }}"><i data-feather="minus"></i>
+                                            Payment Gateway</a>
                                     </li>
                                     <li>
                                         <a href="{{ route('smsgeteway.manage') }}"><i data-feather="minus"></i>
@@ -474,7 +487,8 @@
                                             Tag Manager</a>
                                     </li>
                                     <li>
-                                        <a href="{{ route('pixels.index') }}"><i data-feather="minus"></i>Facebook Pixels</a>
+                                        <a href="{{ route('pixels.index') }}"><i data-feather="minus"></i>Facebook
+                                            Pixels</a>
                                     </li>
                                     <li>
                                         <a href="{{ route('couponcodes.index') }}"><i data-feather="minus"></i>
@@ -482,11 +496,10 @@
                                     </li>
                                     <li>
                                         <a href="{{ route('admin.send_sms') }}"><i data-feather="minus"></i>
-                                           SMS Marketing</a>
+                                            SMS Marketing</a>
                                     </li>
                                     <li>
-                                        <a href="{{ route('reports.facebook_catelogue') }}"><i
-                                                data-feather="minus"></i>
+                                        <a href="{{ route('reports.facebook_catelogue') }}"><i data-feather="minus"></i>
                                             Facebook Catelogue</a>
                                     </li>
                                 </ul>
@@ -502,8 +515,8 @@
                             <div class="collapse" id="siebar-banner">
                                 <ul class="nav-second-level">
                                     <li>
-                                        <a href="{{ route('banner_category.index') }}"><i
-                                                data-feather="minus"></i> Banner Category</a>
+                                        <a href="{{ route('banner_category.index') }}"><i data-feather="minus"></i>
+                                            Banner Category</a>
                                     </li>
                                     <li>
                                         <a href="{{ route('banners.index') }}"><i data-feather="minus"></i>
@@ -523,8 +536,8 @@
                             <div class="collapse" id="siebar-expense">
                                 <ul class="nav-second-level">
                                     <li>
-                                        <a href="{{ route('expensecategories.index') }}"><i
-                                                data-feather="minus"></i> Expense Categories</a>
+                                        <a href="{{ route('expensecategories.index') }}"><i data-feather="minus"></i>
+                                            Expense Categories</a>
                                     </li>
                                     <li>
                                         <a href="{{ route('expense.index') }}"><i data-feather="minus"></i>
@@ -560,8 +573,8 @@
                                             Sales Reports</a>
                                     </li>
                                     <li>
-                                        <a href="{{ route('admin.expense_report') }}"><i
-                                                data-feather="minus"></i> Expense Reports</a>
+                                        <a href="{{ route('admin.expense_report') }}"><i data-feather="minus"></i>
+                                            Expense Reports</a>
                                     </li>
                                     <li>
                                         <a href="{{ route('admin.loss_profit') }}"><i data-feather="minus"></i>
@@ -773,8 +786,8 @@
 
                         <div class="d-grid mt-4">
                             <button class="btn btn-primary" id="resetBtn">Reset to Default</button>
-                            <a href="https://1.envato.market/uboldadmin" class="btn btn-danger mt-3"
-                                target="_blank"><i class="mdi mdi-basket me-1"></i> Purchase Now</a>
+                            <a href="https://1.envato.market/uboldadmin" class="btn btn-danger mt-3" target="_blank"><i
+                                    class="mdi mdi-basket me-1"></i> Purchase Now</a>
                         </div>
                     </div>
                 </div>
@@ -796,7 +809,7 @@
     {!! Toastr::message() !!}
     <script src="{{ asset('public/backEnd/') }}/assets/js/sweetalert.min.js"></script>
     <script type="text/javascript">
-        $(".delete-confirm").click(function(event) {
+        $(".delete-confirm").click(function (event) {
             var form = $(this).closest("form");
             event.preventDefault();
             swal({
@@ -811,7 +824,7 @@
                 }
             });
         });
-        $(".change-confirm").click(function(event) {
+        $(".change-confirm").click(function (event) {
             var form = $(this).closest("form");
             event.preventDefault();
             swal({
@@ -828,18 +841,18 @@
     </script>
     <!--patho courier-->
     <script type="text/javascript">
-        $(document).ready(function() {
-            $('.pathaocity').change(function() {
+        $(document).ready(function () {
+            $('.pathaocity').change(function () {
                 var id = $(this).val();
                 if (id) {
                     $.ajax({
                         type: "GET",
                         url: "{{ url('admin/pathao-city') }}?city_id=" + id,
-                        success: function(res) {
+                        success: function (res) {
                             if (res && res.data && res.data.data) {
                                 $(".pathaozone").empty();
                                 $(".pathaozone").append('<option value="">Select..</option>');
-                                $.each(res.data.data, function(index, zone) {
+                                $.each(res.data.data, function (index, zone) {
                                     $(".pathaozone").append('<option value="' + zone
                                         .zone_id + '">' + zone.zone_name +
                                         '</option>');
@@ -859,18 +872,18 @@
         });
     </script>
     <script type="text/javascript">
-        $(document).ready(function() {
-            $('.pathaozone').change(function() {
+        $(document).ready(function () {
+            $('.pathaozone').change(function () {
                 var id = $(this).val();
                 if (id) {
                     $.ajax({
                         type: "GET",
                         url: "{{ url('admin/pathao-zone') }}?zone_id=" + id,
-                        success: function(res) {
+                        success: function (res) {
                             if (res && res.data && res.data.data) {
                                 $(".pathaoarea").empty();
                                 $(".pathaoarea").append('<option value="">Select..</option>');
-                                $.each(res.data.data, function(index, area) {
+                                $.each(res.data.data, function (index, area) {
                                     $(".pathaoarea").append('<option value="' + area
                                         .area_id + '">' + area.area_name +
                                         '</option>');
@@ -893,7 +906,7 @@
                 type: "GET",
                 url: "{{ route('admin.order.cart_content') }}",
                 dataType: "html",
-                success: function(cartinfo) {
+                success: function (cartinfo) {
                     $('#cartTable').html(cartinfo)
                 }
             });
@@ -904,7 +917,7 @@
                 type: "GET",
                 url: "{{ route('admin.order.cart_details') }}",
                 dataType: "html",
-                success: function(cartinfo) {
+                success: function (cartinfo) {
                     $("#cart_details").html(cartinfo);
                 },
             });
@@ -919,7 +932,7 @@
                     keyword: keyword
                 },
                 url: "{{ route('admin.livesearch') }}",
-                success: function(products) {
+                success: function (products) {
                     if (products) {
                         $(".search_result").html(products);
                     } else {
@@ -928,7 +941,7 @@
                 },
             });
         }
-        $(".search_click").on("input", function() {
+        $(".search_click").on("input", function () {
             var keyword = $(this).val();
             $.ajax({
                 type: "GET",
@@ -936,7 +949,7 @@
                     keyword: keyword
                 },
                 url: "{{ route('admin.livesearch') }}",
-                success: function(response) {
+                success: function (response) {
                     if (response.status === 'success') {
                         cart_content() + cart_details() + search_clear();
                     } else if (response) {
