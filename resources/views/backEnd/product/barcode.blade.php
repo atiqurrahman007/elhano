@@ -19,10 +19,8 @@
         }
 
         /* ── Common Print Styles ─────────────────────── */
-        @page {
-            size: A4 portrait;
-            margin: 0 !important;
-        }
+        /* @page size is set dynamically by JS based on layout selection
+           to prevent a blank first page when using Roll (40mm x 30mm) layout */
 
         @media print {
             header,
@@ -50,6 +48,20 @@
 
             body.layout-standard {
                 padding: 4mm !important;
+            }
+
+            /* ── Reset admin layout wrappers for Roll print ──
+               .content-page has margin-top:70px, min-height:80vh, padding:65px
+               which push content off the 40mm×30mm page → blank first page */
+            body.layout-roll .content-page,
+            body.layout-roll .content-page .content,
+            body.layout-roll .content-page .container-fluid,
+            body.layout-roll .content-page .row {
+                margin: 0 !important;
+                padding: 0 !important;
+                min-height: 0 !important;
+                height: auto !important;
+                overflow: visible !important;
             }
 
             body.layout-diecut .print-grid-container,
@@ -408,6 +420,7 @@
                 width: 40mm !important;
                 height: 30mm !important;
                 page-break-after: always !important;
+                break-after: always !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
                 box-sizing: border-box !important;
@@ -423,6 +436,11 @@
                 align-items: center !important;
                 text-align: center !important;
                 gap: 1px !important;
+            }
+
+            body.layout-roll .roll-label:last-child {
+                page-break-after: avoid !important;
+                break-after: avoid !important;
             }
         }
 
@@ -824,7 +842,24 @@
     </div>
 
     <script>
-        function printFunction() { window.print(); }
+        function printFunction() {
+            // Ensure the correct @page size is applied BEFORE printing
+            // This prevents the blank first page on Roll layout
+            var layout = $('#layout-selector').val() || 'roll';
+            var styleEl = document.getElementById('print-page-style');
+            if (!styleEl) {
+                styleEl = document.createElement('style');
+                styleEl.id = 'print-page-style';
+                document.head.appendChild(styleEl);
+            }
+            if (layout === 'roll') {
+                styleEl.innerHTML = '@page { size: 40mm 30mm; margin: 0 !important; }';
+            } else {
+                styleEl.innerHTML = '@page { size: A4 portrait; margin: 0 !important; }';
+            }
+            // Small delay to let the style render before print dialog opens
+            setTimeout(function() { window.print(); }, 50);
+        }
     </script>
 @endsection
 
