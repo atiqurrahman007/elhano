@@ -19,10 +19,13 @@
         }
 
         /* ── Common Print Styles ─────────────────────── */
-        /* @page size is set dynamically by JS based on layout selection
-           to prevent a blank first page when using Roll (40mm x 30mm) layout */
+        @page {
+            size: A4 portrait;
+            margin: 0 !important;
+        }
 
         @media print {
+
             header,
             footer,
             .no-print,
@@ -48,20 +51,6 @@
 
             body.layout-standard {
                 padding: 4mm !important;
-            }
-
-            /* ── Reset admin layout wrappers for Roll print ──
-               .content-page has margin-top:70px, min-height:80vh, padding:65px
-               which push content off the 40mm×30mm page → blank first page */
-            body.layout-roll .content-page,
-            body.layout-roll .content-page .content,
-            body.layout-roll .content-page .container-fluid,
-            body.layout-roll .content-page .row {
-                margin: 0 !important;
-                padding: 0 !important;
-                min-height: 0 !important;
-                height: auto !important;
-                overflow: visible !important;
             }
 
             body.layout-diecut .print-grid-container,
@@ -173,7 +162,8 @@
             box-sizing: border-box;
             width: 40mm;
             height: 30mm;
-            border-radius: 4px; /* Rounded corners (Die-Cut) */
+            border-radius: 4px;
+            /* Rounded corners (Die-Cut) */
             border: 1px dashed rgba(0, 0, 0, 0.15);
             background: #fff;
             padding: 0;
@@ -323,7 +313,7 @@
                 background: #6c757d;
                 padding: 30px 15px;
                 border-radius: 8px;
-                box-shadow: inset 0 0 12px rgba(0,0,0,0.3);
+                box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.3);
                 overflow-x: auto;
                 display: flex;
                 flex-direction: column;
@@ -335,7 +325,7 @@
             }
 
             .diecut-page {
-                box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
                 border: 1px solid #495057;
                 border-radius: 4px;
                 flex-shrink: 0;
@@ -351,18 +341,19 @@
                 background: #495057;
                 padding: 40px 20px;
                 border-radius: 8px;
-                box-shadow: inset 0 0 12px rgba(0,0,0,0.4);
+                box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.4);
                 overflow-x: auto;
                 display: flex;
                 flex-direction: row;
-                gap: 3mm; /* Gap height: 3mm */
+                gap: 3mm;
+                /* Gap height: 3mm */
                 align-items: center;
                 justify-content: start;
                 margin-bottom: 30px;
             }
 
             .roll-label {
-                box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+                box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
                 border: 1px solid #ced4da;
                 flex-shrink: 0;
                 width: 40mm;
@@ -382,7 +373,9 @@
             }
 
             @media (max-width: 768px) {
-                .diecut-container, .roll-container {
+
+                .diecut-container,
+                .roll-container {
                     padding: 15px 5px;
                 }
             }
@@ -420,7 +413,6 @@
                 width: 40mm !important;
                 height: 30mm !important;
                 page-break-after: always !important;
-                break-after: always !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
                 box-sizing: border-box !important;
@@ -436,11 +428,6 @@
                 align-items: center !important;
                 text-align: center !important;
                 gap: 1px !important;
-            }
-
-            body.layout-roll .roll-label:last-child {
-                page-break-after: avoid !important;
-                break-after: avoid !important;
             }
         }
 
@@ -530,8 +517,10 @@
                             <div class="col-sm-3">
                                 <label class="form-label fw-semibold">Print Template</label>
                                 <select class="form-select" id="layout-selector" name="layout">
-                                    <option value="roll" {{ (request()->layout ?? 'roll') == 'roll' ? 'selected' : '' }}>Roll Label (40mm x 30mm)</option>
-                                    <option value="diecut" {{ (request()->layout ?? 'roll') == 'diecut' ? 'selected' : '' }}>A4 Die-Cut Sheet</option>
+                                    <option value="roll" {{ (request()->layout ?? 'roll') == 'roll' ? 'selected' : '' }}>Roll
+                                        Label (40mm x 30mm)</option>
+                                    <option value="diecut" {{ (request()->layout ?? 'roll') == 'diecut' ? 'selected' : '' }}>
+                                        A4 Die-Cut Sheet</option>
                                     <option value="standard" {{ (request()->layout ?? 'roll') == 'standard' ? 'selected' : '' }}>Standard Grid (Custom Cols)</option>
                                 </select>
                             </div>
@@ -539,17 +528,22 @@
                             {{-- Skip Labels (Only for Diecut Layout) --}}
                             <div class="col-sm-2" id="skip-group">
                                 <label class="form-label fw-semibold">Skip Labels</label>
-                                <input type="number" name="skip" id="skip-input" class="form-control" value="{{ request()->skip ?? 0 }}" min="0" max="54" placeholder="0">
+                                <input type="number" name="skip" id="skip-input" class="form-control"
+                                    value="{{ request()->skip ?? 0 }}" min="0" max="54" placeholder="0">
                             </div>
 
                             {{-- Columns (Visible only when standard layout is active) --}}
                             <div class="col-sm-3" id="col-selector-group" style="display: none;">
                                 <label class="form-label fw-semibold">Columns</label>
                                 <div class="btn-group w-100" id="col-selector">
-                                    <button type="button" class="col-count-btn btn btn-outline-secondary" data-cols="2">2</button>
-                                    <button type="button" class="col-count-btn btn btn-outline-secondary active" data-cols="3">3</button>
-                                    <button type="button" class="col-count-btn btn btn-outline-secondary" data-cols="4">4</button>
-                                    <button type="button" class="col-count-btn btn btn-outline-secondary" data-cols="5">5</button>
+                                    <button type="button" class="col-count-btn btn btn-outline-secondary"
+                                        data-cols="2">2</button>
+                                    <button type="button" class="col-count-btn btn btn-outline-secondary active"
+                                        data-cols="3">3</button>
+                                    <button type="button" class="col-count-btn btn btn-outline-secondary"
+                                        data-cols="4">4</button>
+                                    <button type="button" class="col-count-btn btn btn-outline-secondary"
+                                        data-cols="5">5</button>
                                 </div>
                                 <input type="hidden" name="cols" id="cols-input" value="{{ request()->cols ?? 3 }}">
                             </div>
@@ -567,35 +561,50 @@
                         <div class="mt-3 p-3 bg-light border rounded-3" id="diecut-calibrator" style="display: none;">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div class="d-flex align-items-center">
-                                    <h6 class="m-0 fw-semibold text-primary"><i class="ri-settings-4-line me-1"></i> A4 Sheet Printer Calibration</h6>
-                                    <span class="badge bg-info ms-2 text-dark small" style="font-size:10px;">Instant Screen Update</span>
+                                    <h6 class="m-0 fw-semibold text-primary"><i class="ri-settings-4-line me-1"></i> A4
+                                        Sheet Printer Calibration</h6>
+                                    <span class="badge bg-info ms-2 text-dark small" style="font-size:10px;">Instant Screen
+                                        Update</span>
                                 </div>
-                                <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2" id="reset-diecut-btn" style="font-size: 11px;">Reset Defaults</button>
+                                <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2"
+                                    id="reset-diecut-btn" style="font-size: 11px;">Reset Defaults</button>
                             </div>
                             <div class="row g-3">
                                 <div class="col-md-2 col-sm-4">
-                                    <label class="form-label mb-1 small fw-semibold">Top Margin: <span id="top-margin-val">11.6</span>mm</label>
-                                    <input type="range" class="form-range calibrator-input" id="top-margin-slider" min="0" max="30" step="0.1" value="11.6">
+                                    <label class="form-label mb-1 small fw-semibold">Top Margin: <span
+                                            id="top-margin-val">11.6</span>mm</label>
+                                    <input type="range" class="form-range calibrator-input" id="top-margin-slider" min="0"
+                                        max="30" step="0.1" value="11.6">
                                 </div>
                                 <div class="col-md-2 col-sm-4">
-                                    <label class="form-label mb-1 small fw-semibold">Side Margin: <span id="left-margin-val">9.7</span>mm</label>
-                                    <input type="range" class="form-range calibrator-input" id="left-margin-slider" min="0" max="30" step="0.1" value="9.7">
+                                    <label class="form-label mb-1 small fw-semibold">Side Margin: <span
+                                            id="left-margin-val">9.7</span>mm</label>
+                                    <input type="range" class="form-range calibrator-input" id="left-margin-slider" min="0"
+                                        max="30" step="0.1" value="9.7">
                                 </div>
                                 <div class="col-md-2 col-sm-4">
-                                    <label class="form-label mb-1 small fw-semibold">Row Gap: <span id="row-gap-val">0.0</span>mm</label>
-                                    <input type="range" class="form-range calibrator-input" id="row-gap-slider" min="0" max="10" step="0.1" value="0">
+                                    <label class="form-label mb-1 small fw-semibold">Row Gap: <span
+                                            id="row-gap-val">0.0</span>mm</label>
+                                    <input type="range" class="form-range calibrator-input" id="row-gap-slider" min="0"
+                                        max="10" step="0.1" value="0">
                                 </div>
                                 <div class="col-md-2 col-sm-4">
-                                    <label class="form-label mb-1 small fw-semibold">Col Gap: <span id="col-gap-val">0.0</span>mm</label>
-                                    <input type="range" class="form-range calibrator-input" id="col-gap-slider" min="0" max="10" step="0.1" value="0">
+                                    <label class="form-label mb-1 small fw-semibold">Col Gap: <span
+                                            id="col-gap-val">0.0</span>mm</label>
+                                    <input type="range" class="form-range calibrator-input" id="col-gap-slider" min="0"
+                                        max="10" step="0.1" value="0">
                                 </div>
                                 <div class="col-md-2 col-sm-4">
-                                    <label class="form-label mb-1 small fw-semibold">Barcode Height: <span id="barcode-height-val">25</span>px</label>
-                                    <input type="range" class="form-range calibrator-input" id="barcode-height-slider" min="15" max="45" step="1" value="25">
+                                    <label class="form-label mb-1 small fw-semibold">Barcode Height: <span
+                                            id="barcode-height-val">25</span>px</label>
+                                    <input type="range" class="form-range calibrator-input" id="barcode-height-slider"
+                                        min="15" max="45" step="1" value="25">
                                 </div>
                                 <div class="col-md-2 col-sm-4">
-                                    <label class="form-label mb-1 small fw-semibold">Font Size: <span id="font-scale-val">100</span>%</label>
-                                    <input type="range" class="form-range calibrator-input" id="font-scale-slider" min="70" max="130" step="5" value="100">
+                                    <label class="form-label mb-1 small fw-semibold">Font Size: <span
+                                            id="font-scale-val">100</span>%</label>
+                                    <input type="range" class="form-range calibrator-input" id="font-scale-slider" min="70"
+                                        max="130" step="5" value="100">
                                 </div>
                             </div>
                         </div>
@@ -604,27 +613,38 @@
                         <div class="mt-3 p-3 bg-light border rounded-3" id="roll-calibrator" style="display: none;">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div class="d-flex align-items-center">
-                                    <h6 class="m-0 fw-semibold text-primary"><i class="ri-settings-4-line me-1"></i> Roll Printer Calibration (40mm x 30mm)</h6>
-                                    <span class="badge bg-info ms-2 text-dark small" style="font-size:10px;">Instant Screen Update</span>
+                                    <h6 class="m-0 fw-semibold text-primary"><i class="ri-settings-4-line me-1"></i> Roll
+                                        Printer Calibration (40mm x 30mm)</h6>
+                                    <span class="badge bg-info ms-2 text-dark small" style="font-size:10px;">Instant Screen
+                                        Update</span>
                                 </div>
-                                <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2" id="reset-roll-btn" style="font-size: 11px;">Reset Defaults</button>
+                                <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2" id="reset-roll-btn"
+                                    style="font-size: 11px;">Reset Defaults</button>
                             </div>
                             <div class="row g-3">
                                 <div class="col-md-3 col-sm-6">
-                                    <label class="form-label mb-1 small fw-semibold">Top Margin Offset: <span id="roll-top-margin-val">0.0</span>mm</label>
-                                    <input type="range" class="form-range roll-calibrator-input" id="roll-top-margin-slider" min="-5" max="5" step="0.1" value="0.0">
+                                    <label class="form-label mb-1 small fw-semibold">Top Margin Offset: <span
+                                            id="roll-top-margin-val">0.0</span>mm</label>
+                                    <input type="range" class="form-range roll-calibrator-input" id="roll-top-margin-slider"
+                                        min="-5" max="5" step="0.1" value="0.0">
                                 </div>
                                 <div class="col-md-3 col-sm-6">
-                                    <label class="form-label mb-1 small fw-semibold">Left Margin Offset: <span id="roll-left-margin-val">0.0</span>mm</label>
-                                    <input type="range" class="form-range roll-calibrator-input" id="roll-left-margin-slider" min="-5" max="5" step="0.1" value="0.0">
+                                    <label class="form-label mb-1 small fw-semibold">Left Margin Offset: <span
+                                            id="roll-left-margin-val">0.0</span>mm</label>
+                                    <input type="range" class="form-range roll-calibrator-input"
+                                        id="roll-left-margin-slider" min="-5" max="5" step="0.1" value="0.0">
                                 </div>
                                 <div class="col-md-3 col-sm-6">
-                                    <label class="form-label mb-1 small fw-semibold">Barcode Height: <span id="roll-barcode-height-val">28</span>px</label>
-                                    <input type="range" class="form-range roll-calibrator-input" id="roll-barcode-height-slider" min="15" max="45" step="1" value="28">
+                                    <label class="form-label mb-1 small fw-semibold">Barcode Height: <span
+                                            id="roll-barcode-height-val">28</span>px</label>
+                                    <input type="range" class="form-range roll-calibrator-input"
+                                        id="roll-barcode-height-slider" min="15" max="45" step="1" value="28">
                                 </div>
                                 <div class="col-md-3 col-sm-6">
-                                    <label class="form-label mb-1 small fw-semibold">Font Size: <span id="roll-font-scale-val">100</span>%</label>
-                                    <input type="range" class="form-range roll-calibrator-input" id="roll-font-scale-slider" min="70" max="130" step="5" value="100">
+                                    <label class="form-label mb-1 small fw-semibold">Font Size: <span
+                                            id="roll-font-scale-val">100</span>%</label>
+                                    <input type="range" class="form-range roll-calibrator-input" id="roll-font-scale-slider"
+                                        min="70" max="130" step="5" value="100">
                                 </div>
                             </div>
                         </div>
@@ -692,16 +712,16 @@
             @php
                 $cols = max(2, min(5, (int) (request()->cols ?? 3)));
                 $layout = request()->layout ?? 'roll';
-                $skip = max(0, min(54, (int)(request()->skip ?? 0)));
-                
+                $skip = max(0, min(54, (int) (request()->skip ?? 0)));
+
                 $total_labels = 0;
                 $flat_labels = [];
-                
+
                 // Add empty placeholders for skip
                 for ($i = 0; $i < $skip; $i++) {
                     $flat_labels[] = ['is_placeholder' => true];
                 }
-                
+
                 foreach ($selected_items as $item) {
                     $total_labels += $item['copies'];
                     for ($i = 0; $i < $item['copies']; $i++) {
@@ -710,7 +730,7 @@
                         $flat_labels[] = $item_copy;
                     }
                 }
-                
+
                 // Chunk the flat labels into pages of 55 labels (5 columns x 11 rows)
                 $label_pages = array_chunk($flat_labels, 55);
             @endphp
@@ -732,7 +752,8 @@
                         <div class="diecut-grid">
                             @foreach ($page_labels as $label)
                                 @if ($label['is_placeholder'])
-                                    <div class="diecut-label diecut-label-placeholder" style="visibility: hidden; border: none !important;"></div>
+                                    <div class="diecut-label diecut-label-placeholder" style="visibility: hidden; border: none !important;">
+                                    </div>
                                 @else
                                     <div class="diecut-label">
                                         {{-- Product Name --}}
@@ -742,7 +763,8 @@
                                         @if ($label['type'] == 0)
                                             <div class="diecut-variant">
                                                 @if($label['size']) <span>S: <strong>{{ $label['size'] }}</strong></span> @endif
-                                                @if($label['color']) <span style="margin-left:4px">C: <strong>{{ $label['color'] }}</strong></span> @endif
+                                                @if($label['color']) <span style="margin-left:4px">C:
+                                                <strong>{{ $label['color'] }}</strong></span> @endif
                                             </div>
                                         @else
                                             <div class="diecut-variant">&nbsp;</div>
@@ -842,24 +864,7 @@
     </div>
 
     <script>
-        function printFunction() {
-            // Ensure the correct @page size is applied BEFORE printing
-            // This prevents the blank first page on Roll layout
-            var layout = $('#layout-selector').val() || 'roll';
-            var styleEl = document.getElementById('print-page-style');
-            if (!styleEl) {
-                styleEl = document.createElement('style');
-                styleEl.id = 'print-page-style';
-                document.head.appendChild(styleEl);
-            }
-            if (layout === 'roll') {
-                styleEl.innerHTML = '@page { size: 40mm 30mm; margin: 0 !important; }';
-            } else {
-                styleEl.innerHTML = '@page { size: A4 portrait; margin: 0 !important; }';
-            }
-            // Small delay to let the style render before print dialog opens
-            setTimeout(function() { window.print(); }, 50);
-        }
+        function printFunction() { window.print(); }
     </script>
 @endsection
 
@@ -977,13 +982,13 @@
 
             // ── Dynamic Layout Switching ──
             var initialLayout = $('#layout-selector').val() || 'roll';
-            
+
             function updatePrintPageStyle(layout) {
                 var styleEl = $('#print-page-style');
                 if (styleEl.length === 0) {
                     styleEl = $('<style id="print-page-style">').appendTo('head');
                 }
-                
+
                 if (layout === 'roll') {
                     styleEl.html('@page { size: 40mm 30mm; margin: 0 !important; }');
                 } else if (layout === 'diecut') {
@@ -1023,12 +1028,12 @@
                     $('#skip-group').hide();
                 }
             }
-            
+
             $('#layout-selector').on('change', function () {
                 var layout = $(this).val();
                 toggleLayoutViews(layout);
             });
-            
+
             toggleLayoutViews(initialLayout);
 
             // ── A4 Die-Cut Calibration & Offset Settings ──
