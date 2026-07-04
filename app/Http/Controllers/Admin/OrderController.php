@@ -480,7 +480,7 @@ class OrderController extends Controller
         $categories = Category::where('status', 1)->select('id', 'name')->get();
         $cartinfo = Cart::instance('sale')->content();
         $shippingcharge = Shippingcharge::where('status', 1)->get();
-        Session::put('pos_shipping');
+        Session::put('pos_shipping', 0);
         Session::forget('pos_discount');
         Session::forget('pos_discount_type');
         Session::forget('product_discount');
@@ -584,11 +584,11 @@ class OrderController extends Controller
         // order data save
         $order = new Order();
         $order->invoice_id = rand(11111, 99999);
-        $order->amount = ($subtotal + $shipping_area->amount) - $discount;
+        $order->amount = $subtotal - $discount;
         $order->discount = $discount ? $discount : 0;
-        $order->shipping_charge = $shipping_area->amount;
+        $order->shipping_charge = 0;
         $order->customer_id = $customer_id;
-        $order->order_status = 1;
+        $order->order_status = 6;
         $order->user_id = Auth::user()->id;
         $order->note = $request->note;
         $order->save();
@@ -597,10 +597,17 @@ class OrderController extends Controller
         $shipping = new Shipping();
         $shipping->order_id = $order->id;
         $shipping->customer_id = $customer_id;
-        $shipping->name = $name;
-        $shipping->phone = $phone;
-        $shipping->address = $address;
-        $shipping->area = $request->area ? $shipping_area->name : 'Free Shipping';
+        if ($request->guest_customer) {
+            $shipping->name = null;
+            $shipping->phone = null;
+            $shipping->address = 'POS';
+            $shipping->area = null;
+        } else {
+            $shipping->name = $name;
+            $shipping->phone = $phone;
+            $shipping->address = $address;
+            $shipping->area = $request->area ? $shipping_area->name : 'Free Shipping';
+        }
         $shipping->save();
 
         // payment data save

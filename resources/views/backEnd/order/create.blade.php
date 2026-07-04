@@ -336,7 +336,7 @@
                                         Guest Customer
                                     </label>
                                     <input class="form-check-input" type="checkbox" name="guest_customer" value="1"
-                                        id="guest_customer">
+                                        id="guest_customer" checked>
                                 </div>
 
                                 <div class="new_customer">
@@ -480,7 +480,7 @@
                     $('.new_customer').show();
                     $('.new_customer input').attr('required', 'required');
                 }
-            });
+            }).trigger('change');
 
             // Live Search — filters grid by name or barcode, and auto-adds on exact barcode match (either automatically on typing, or on Enter key)
             var isSearchingBarcode = false;
@@ -839,7 +839,7 @@
                             success: function () {
                                 $('input[name="name"]').val('');
                                 $('input[name="phone"]').val('');
-                                $('#guest_customer').prop('checked', false).trigger('change');
+                                $('#guest_customer').prop('checked', true).trigger('change');
                                 $('#pos_discount_input').val(0);
                                 $('#pos_discount_type').val('flat');
 
@@ -1132,7 +1132,7 @@
                             // Reset customer fields
                             $('input[name="name"]').val('');
                             $('input[name="phone"]').val('');
-                            $('#guest_customer').prop('checked', false).trigger('change');
+                            $('#guest_customer').prop('checked', true).trigger('change');
                             $('#pos_discount_input').val(0);
                             $('#pos_discount_type').val('flat');
 
