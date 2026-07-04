@@ -67,18 +67,32 @@
                                 <td style="width: 40%; float: left; padding-top: 15px;">
                                     <img src="{{ asset($generalsetting->dark_logo) }}"
                                         style="margin-top:25px !important;width:160px" alt="">
-                                    <p style="font-size: 14px; margin-top:15px; color: #222;"><strong>Payment
-                                            Method:</strong> <span
-                                            style="text-transform: uppercase;">{{ $order->payment ? $order->payment->payment_method : '' }}</span>
+                                    <p style="font-size: 14px; margin-top:15px; color: #222; margin-bottom: 5px;"><strong>Payment Method:</strong>
+                                        @if ($order->payments && $order->payments->count() > 1)
+                                            <span style="text-transform: uppercase;">Multiple</span>
+                                            <div style="font-size: 13px; color: #444; margin-top: 5px; line-height: 1.4;">
+                                                @foreach($order->payments as $pm)
+                                                    <div style="padding-left: 10px;">• {{ $pm->payment_method }}: ৳{{ $pm->amount }}</div>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <span style="text-transform: uppercase;">{{ $order->payment ? $order->payment->payment_method : '' }}</span>
+                                            @if ($order->payment && $order->payment->payment_method === 'Cash' && $order->payment->received_amount > $order->amount)
+                                                <div style="font-size: 13px; color: #555; margin-top: 3px;">
+                                                    <div style="padding-left: 10px;">• Received: ৳{{ $order->payment->received_amount }}</div>
+                                                    <div style="padding-left: 10px;">• Change Return: ৳{{ $order->payment->change_amount }}</div>
+                                                </div>
+                                            @endif
+                                        @endif
                                     </p>
-                                    @if ($order->payment->sender_number)
-                                        <p> Sender Number : {{ $order->payment->sender_number }}</p>
+                                    @if ($order->payment && $order->payment->sender_number)
+                                        <p style="margin: 0;"> Sender Number : {{ $order->payment->sender_number }}</p>
                                     @endif
-                                    @if ($order->payment->trx_id)
-                                        <p> Trx ID : {{ $order->payment->trx_id }}</p>
+                                    @if ($order->payment && $order->payment->trx_id)
+                                        <p style="margin: 0;"> Trx ID : {{ $order->payment->trx_id }}</p>
                                     @endif
-                                    @if ($order->payment->card_number)
-                                        <p> Card Number : {{ $order->payment->card_number }}</p>
+                                    @if ($order->payment && isset($order->payment->card_number) && $order->payment->card_number)
+                                        <p style="margin: 0;"> Card Number : {{ $order->payment->card_number }}</p>
                                     @endif
                                     <div class="invoice_form mt-3">
                                         <p style="font-size:16px;line-height:1.8;color:#222"><strong>Invoice From:</strong>

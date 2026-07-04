@@ -399,9 +399,48 @@
                                 </div>
                             </div>
 
-                            <div class="mt-3">
-                                <button type="submit" class="btn btn-primary w-100 btn-lg"><i
-                                        class="fas fa-check-circle me-1"></i> Print Receipt</button>
+                            <!-- POS Payment Status Summary -->
+                            <div class="row text-center mt-3 py-2 bg-light rounded g-0 border">
+                                <div class="col-4 border-end">
+                                    <div class="text-muted small fw-semibold">Total Payable</div>
+                                    <div class="fs-5 fw-bold text-dark" id="summary_total">৳ 0</div>
+                                </div>
+                                <div class="col-4 border-end">
+                                    <div class="text-muted small fw-semibold">Paid Amount</div>
+                                    <div class="fs-5 fw-bold text-success" id="summary_paid">৳ 0</div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-muted small fw-semibold">Due Amount</div>
+                                    <div class="fs-5 fw-bold text-danger" id="summary_due">৳ 0</div>
+                                </div>
+                            </div>
+
+                            <!-- Hidden inputs to submit payment details -->
+                            <input type="hidden" name="payment_method" id="input_payment_method" value="Cash">
+                            <input type="hidden" name="payment_status" id="input_payment_status" value="paid">
+                            <input type="hidden" name="paid_amount" id="input_paid_amount" value="0">
+                            <input type="hidden" name="received_amount" id="input_received_amount" value="0">
+                            <input type="hidden" name="change_amount" id="input_change_amount" value="0">
+                            <!-- Container for split payments inputs -->
+                            <div id="split_payments_inputs" style="display:none;"></div>
+
+                            <!-- POS Payment Action Buttons -->
+                            <div class="row g-2 mt-3">
+                                <div class="col-4">
+                                    <button type="button" class="btn btn-info text-white w-100 py-3 fw-bold btn-payment-action" id="btn-payment-multiple">
+                                        <i class="fas fa-credit-card d-block mb-1 fs-5"></i> Multiple
+                                    </button>
+                                </div>
+                                <div class="col-4">
+                                    <button type="button" class="btn btn-success w-100 py-3 fw-bold btn-payment-action" id="btn-payment-cash">
+                                        <i class="fas fa-money-bill-wave d-block mb-1 fs-5"></i> Cash
+                                    </button>
+                                </div>
+                                <div class="col-4">
+                                    <button type="button" class="btn w-100 py-3 fw-bold text-white btn-payment-action" id="btn-payment-payall" style="background-color: #6f42c1;">
+                                        <i class="fas fa-money-bill-alt d-block mb-1 fs-5"></i> Pay All
+                                    </button>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -462,6 +501,109 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cash Payment Modal -->
+    <div class="modal fade" id="cashPaymentModal" tabindex="-1" role="dialog" aria-labelledby="cashPaymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title text-white" id="cashPaymentModalLabel"><i class="fas fa-money-bill-wave me-2"></i> Cash Payment</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3 text-center">
+                        <span class="text-muted d-block small">Total Payable</span>
+                        <h2 class="fw-bold text-dark" id="cash_modal_payable">৳ 0.00</h2>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Cash Received</label>
+                        <input type="number" class="form-control form-control-lg text-end fw-bold text-success" id="cash_received_input" placeholder="0.00" min="0" step="any" autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Quick Denominations</label>
+                        <div class="d-flex flex-wrap gap-2" id="quick_cash_denominations">
+                            <!-- Populated dynamically based on total -->
+                        </div>
+                    </div>
+                    <div class="p-3 bg-light rounded text-center mb-3">
+                        <span class="text-muted d-block small">Change Return</span>
+                        <h3 class="fw-bold text-danger" id="cash_modal_change">৳ 0.00</h3>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success text-white px-4" id="submit_cash_payment"><i class="fas fa-check-circle me-1"></i> Submit & Print</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Multiple Payment Modal -->
+    <div class="modal fade" id="multiplePaymentModal" tabindex="-1" role="dialog" aria-labelledby="multiplePaymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title text-white" id="multiplePaymentModalLabel"><i class="fas fa-credit-card me-2"></i> Split / Multiple Payment</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3 align-items-center">
+                        <div class="col-6 text-center border-end">
+                            <span class="text-muted d-block small">Total Payable</span>
+                            <h3 class="fw-bold text-dark" id="multiple_modal_payable">৳ 0.00</h3>
+                        </div>
+                        <div class="col-6 text-center">
+                            <span class="text-muted d-block small">Remaining / Due</span>
+                            <h3 class="fw-bold text-danger" id="multiple_modal_due">৳ 0.00</h3>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Payment Method</th>
+                                    <th style="width: 250px;">Amount Paid</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><i class="fas fa-money-bill-wave text-success me-2"></i> Cash</td>
+                                    <td><input type="number" class="form-control text-end fw-bold split-amount" data-method="Cash" placeholder="0.00" min="0" step="any"></td>
+                                </tr>
+                                <tr>
+                                    <td><i class="fas fa-credit-card text-primary me-2"></i> Card</td>
+                                    <td><input type="number" class="form-control text-end fw-bold split-amount" data-method="Card" placeholder="0.00" min="0" step="any"></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <span class="badge text-white px-2 py-1 me-2" style="background-color: #e2136e; font-size: 0.75rem; border-radius: 4px;">bKash</span> bKash Mobile Wallet
+                                    </td>
+                                    <td><input type="number" class="form-control text-end fw-bold split-amount" data-method="bKash" placeholder="0.00" min="0" step="any"></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <span class="badge text-white px-2 py-1 me-2" style="background-color: #f7941d; font-size: 0.75rem; border-radius: 4px;">Nagad</span> Nagad Mobile Wallet
+                                    </td>
+                                    <td><input type="number" class="form-control text-end fw-bold split-amount" data-method="Nagad" placeholder="0.00" min="0" step="any"></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <span class="badge text-white px-2 py-1 me-2" style="background-color: #8c3c96; font-size: 0.75rem; border-radius: 4px;">Rocket</span> Rocket Mobile Wallet
+                                    </td>
+                                    <td><input type="number" class="form-control text-end fw-bold split-amount" data-method="Rocket" placeholder="0.00" min="0" step="any"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-info text-white px-4" id="submit_multiple_payment" disabled><i class="fas fa-check-circle me-1"></i> Submit & Print</button>
                 </div>
             </div>
         </div>
@@ -1157,6 +1299,188 @@
                     }
                 });
             });
+
+            // ── POS Payment Operations ──
+            
+            window.updatePaymentSummary = function () {
+                var total = parseFloat($('#cart_total_payable_val').data('value') || 0);
+                $('#summary_total').text('৳ ' + total.toFixed(2));
+                
+                var method = $('#input_payment_method').val();
+                var paid = parseFloat($('#input_paid_amount').val() || 0);
+                
+                if (method === 'Cash' || paid === 0) {
+                    paid = total;
+                    $('#input_paid_amount').val(total);
+                }
+                
+                var due = Math.max(0, total - paid);
+                $('#summary_paid').text('৳ ' + paid.toFixed(2));
+                $('#summary_due').text('৳ ' + due.toFixed(2));
+            };
+
+            // Initial call to sync summary on page load
+            setTimeout(window.updatePaymentSummary, 500);
+
+            // Click Cash Button
+            $('#btn-payment-cash').on('click', function () {
+                var total = parseFloat($('#cart_total_payable_val').data('value') || 0);
+                if (total <= 0) {
+                    toastr.warning("Cart is empty.");
+                    return;
+                }
+                $('#cash_modal_payable').text('৳ ' + total.toFixed(2));
+                $('#cash_received_input').val('').attr('placeholder', total.toFixed(2));
+                $('#cash_modal_change').text('৳ 0.00').removeClass('text-success').addClass('text-danger');
+                
+                // Populate quick denominations
+                var denomContainer = $('#quick_cash_denominations');
+                denomContainer.empty();
+                var nextRound = Math.ceil(total / 50) * 50;
+                var denoms = [total, nextRound, nextRound + 50, nextRound + 100, Math.ceil(total / 500) * 500, Math.ceil(total / 1000) * 1000];
+                // remove duplicates and filter out values smaller than total
+                denoms = [...new Set(denoms)].filter(v => v >= total && v > 0);
+                $.each(denoms, function(i, val) {
+                    denomContainer.append('<button type="button" class="btn btn-outline-success btn-sm quick-denom-btn" data-value="' + val + '">৳ ' + val + '</button>');
+                });
+                
+                $('#cashPaymentModal').modal('show');
+            });
+
+            // Click quick denomination buttons
+            $(document).on('click', '.quick-denom-btn', function () {
+                var val = parseFloat($(this).data('value'));
+                $('#cash_received_input').val(val).trigger('input');
+            });
+
+            // Calculate Cash Change Return
+            $('#cash_received_input').on('input', function () {
+                var total = parseFloat($('#cart_total_payable_val').data('value') || 0);
+                var received = parseFloat($(this).val()) || 0;
+                var change = Math.max(0, received - total);
+                $('#cash_modal_change').text('৳ ' + change.toFixed(2));
+                if (received >= total) {
+                    $('#cash_modal_change').removeClass('text-danger').addClass('text-success');
+                } else {
+                    $('#cash_modal_change').removeClass('text-success').addClass('text-danger');
+                }
+            });
+
+            // Submit Cash Payment
+            $('#submit_cash_payment').on('click', function () {
+                var total = parseFloat($('#cart_total_payable_val').data('value') || 0);
+                var received = parseFloat($('#cash_received_input').val());
+                if (isNaN(received) || received < total) {
+                    toastr.error("Cash received must be equal to or greater than Total Payable!");
+                    return;
+                }
+                
+                var change = Math.max(0, received - total);
+
+                // Set hidden inputs
+                $('#input_payment_method').val('Cash');
+                $('#input_payment_status').val('paid');
+                $('#input_paid_amount').val(total);
+                $('#input_received_amount').val(received);
+                $('#input_change_amount').val(change);
+                $('#split_payments_inputs').empty();
+                
+                $('#cashPaymentModal').modal('hide');
+                
+                // Submit Form
+                $('.pos_form').submit();
+            });
+
+            // Click Pay All Button
+            $('#btn-payment-payall').on('click', function () {
+                var total = parseFloat($('#cart_total_payable_val').data('value') || 0);
+                if (total <= 0) {
+                    toastr.warning("Cart is empty.");
+                    return;
+                }
+                
+                // Set hidden inputs
+                $('#input_payment_method').val('Cash');
+                $('#input_payment_status').val('paid');
+                $('#input_paid_amount').val(total);
+                $('#input_received_amount').val(total);
+                $('#input_change_amount').val(0);
+                $('#split_payments_inputs').empty();
+                
+                // Submit Form
+                $('.pos_form').submit();
+            });
+
+            // Click Multiple Button
+            $('#btn-payment-multiple').on('click', function () {
+                var total = parseFloat($('#cart_total_payable_val').data('value') || 0);
+                if (total <= 0) {
+                    toastr.warning("Cart is empty.");
+                    return;
+                }
+                $('#multiple_modal_payable').text('৳ ' + total.toFixed(2));
+                $('#multiple_modal_due').text('৳ ' + total.toFixed(2));
+                $('.split-amount').val('');
+                $('#submit_multiple_payment').attr('disabled', true);
+                $('#multiplePaymentModal').modal('show');
+            });
+
+            // Split payments inputs listener
+            $('.split-amount').on('input', function () {
+                var total = parseFloat($('#cart_total_payable_val').data('value') || 0);
+                var totalPaid = 0;
+                $('.split-amount').each(function () {
+                    var val = parseFloat($(this).val()) || 0;
+                    totalPaid += val;
+                });
+                
+                var remaining = Math.max(0, total - totalPaid);
+                $('#multiple_modal_due').text('৳ ' + remaining.toFixed(2));
+                
+                // Enable submit only if total paid is equal to or exceeds total payable
+                if (totalPaid >= total) {
+                    $('#multiple_modal_due').removeClass('text-danger').addClass('text-success');
+                    $('#submit_multiple_payment').attr('disabled', false);
+                } else {
+                    $('#multiple_modal_due').removeClass('text-success').addClass('text-danger');
+                    $('#submit_multiple_payment').attr('disabled', true);
+                }
+            });
+
+            // Submit Multiple Payment
+            $('#submit_multiple_payment').on('click', function () {
+                var total = parseFloat($('#cart_total_payable_val').data('value') || 0);
+                var totalPaid = 0;
+                var splitInputs = $('#split_payments_inputs');
+                splitInputs.empty();
+                
+                var index = 0;
+                $('.split-amount').each(function () {
+                    var val = parseFloat($(this).val()) || 0;
+                    if (val > 0) {
+                        var method = $(this).data('method');
+                        splitInputs.append('<input type="hidden" name="split_payments[' + index + '][method]" value="' + method + '">');
+                        splitInputs.append('<input type="hidden" name="split_payments[' + index + '][amount]" value="' + val + '">');
+                        totalPaid += val;
+                        index++;
+                    }
+                });
+                
+                if (totalPaid < total) {
+                    toastr.error("Total paid amount must be equal to or greater than Total Payable!");
+                    return;
+                }
+                
+                // Set hidden inputs
+                $('#input_payment_method').val('Multiple');
+                $('#input_payment_status').val('paid');
+                $('#input_paid_amount').val(total); // Cap at total payable
+                
+                $('#multiplePaymentModal').modal('hide');
+                
+                // Submit Form
+                $('.pos_form').submit();
+            });
         });
 
         function cart_content() {
@@ -1177,6 +1501,9 @@
                 dataType: "html",
                 success: function (cartinfo) {
                     $("#cart_details").html(cartinfo);
+                    if (typeof window.updatePaymentSummary === 'function') {
+                        window.updatePaymentSummary();
+                    }
                 },
             });
         }

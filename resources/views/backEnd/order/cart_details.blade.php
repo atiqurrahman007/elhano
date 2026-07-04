@@ -28,5 +28,5 @@
 <hr>
 <div class="d-flex justify-content-between fs-5 fw-bold">
     <span>Total</span>
-    <span>{{($subtotal + $shipping) - $total_discount}}</span>
+    <span id="cart_total_payable_val" data-value="{{($subtotal + $shipping) - $total_discount}}">{{($subtotal + $shipping) - $total_discount}}</span>
 </div>

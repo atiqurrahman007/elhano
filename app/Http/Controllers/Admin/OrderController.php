@@ -611,13 +611,36 @@ class OrderController extends Controller
         $shipping->save();
 
         // payment data save
-        $payment = new Payment();
-        $payment->order_id = $order->id;
-        $payment->customer_id = $customer_id;
-        $payment->payment_method = 'Cash On Delivery';
-        $payment->amount = $order->amount;
-        $payment->payment_status = 'pending';
-        $payment->save();
+        $payment_method = $request->payment_method ?? 'Cash';
+        $payment_status = $request->payment_status ?? 'paid';
+        $paid_amount = (int)round(floatval($request->paid_amount ?? $order->amount));
+
+        if ($payment_method === 'Multiple' && is_array($request->split_payments)) {
+            foreach ($request->split_payments as $split) {
+                $splitAmount = (int)round(floatval($split['amount'] ?? 0));
+                if ($splitAmount > 0) {
+                    $splitPayment = new Payment();
+                    $splitPayment->order_id = $order->id;
+                    $splitPayment->customer_id = $customer_id;
+                    $splitPayment->payment_method = $split['method'];
+                    $splitPayment->amount = $splitAmount;
+                    $splitPayment->received_amount = $splitAmount;
+                    $splitPayment->change_amount = 0;
+                    $splitPayment->payment_status = 'paid';
+                    $splitPayment->save();
+                }
+            }
+        } else {
+            $payment = new Payment();
+            $payment->order_id = $order->id;
+            $payment->customer_id = $customer_id;
+            $payment->payment_method = $payment_method;
+            $payment->amount = $paid_amount;
+            $payment->received_amount = (int)round(floatval($request->received_amount ?? $paid_amount));
+            $payment->change_amount = (int)round(floatval($request->change_amount ?? 0));
+            $payment->payment_status = $payment_status;
+            $payment->save();
+        }
 
         // order details data save
         foreach (Cart::instance('sale')->content() as $cart) {

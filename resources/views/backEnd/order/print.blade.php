@@ -257,11 +257,11 @@
             </tr>
             <tr>
                 <td>AMOUNT PAID</td>
-                <td class="text-right">{{ number_format($order->amount, 2) }}</td>
+                <td class="text-right">{{ number_format($order->payment ? $order->payment->received_amount : $order->amount, 2) }}</td>
             </tr>
             <tr>
                 <td>CHANGE</td>
-                <td class="text-right">0.00</td>
+                <td class="text-right">{{ number_format($order->payment ? $order->payment->change_amount : 0, 2) }}</td>
             </tr>
         </table>
 
@@ -270,12 +270,19 @@
         <!-- Payment Method Details -->
         <div class="payment-section">
             <div class="bold">PAYMENT METHOD</div>
-            <div>Paid by {{ $order->payment ? $order->payment->payment_method : 'Cash' }}</div>
-            @if($order->payment && $order->payment->trx_id)
-            <div>TXN ID: {{ $order->payment->trx_id }}</div>
-            @endif
-            @if($order->payment && $order->payment->card_number)
-            <div>CARD: {{ $order->payment->card_number }}</div>
+            @if ($order->payments && $order->payments->count() > 1)
+                <div>Paid by: Multiple</div>
+                @foreach($order->payments as $pm)
+                    <div style="padding-left: 10px;">- {{ $pm->payment_method }}: ৳{{ number_format($pm->amount, 2) }}</div>
+                @endforeach
+            @else
+                <div>Paid by {{ $order->payment ? $order->payment->payment_method : 'Cash' }}</div>
+                @if($order->payment && $order->payment->trx_id)
+                <div>TXN ID: {{ $order->payment->trx_id }}</div>
+                @endif
+                @if($order->payment && isset($order->payment->card_number) && $order->payment->card_number)
+                <div>CARD: {{ $order->payment->card_number }}</div>
+                @endif
             @endif
         </div>
 
