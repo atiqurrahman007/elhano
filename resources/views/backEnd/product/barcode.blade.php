@@ -420,7 +420,10 @@
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
                 box-sizing: border-box !important;
-                padding: var(--roll-top-margin) var(--roll-left-margin) 0 0 !important;
+                position: relative !important;
+                top: var(--roll-top-margin) !important;
+                left: var(--roll-left-margin) !important;
+                padding: 0 !important;
                 border: none !important;
                 box-shadow: none !important;
                 margin: 0 !important;
