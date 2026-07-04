@@ -11,10 +11,12 @@
             --diecut-col-gap: 0mm;
             --diecut-font-scale: 1;
             --diecut-barcode-height: 25px;
+            --diecut-barcode-width: auto;
 
             --roll-top-margin: 0mm;
             --roll-left-margin: 0mm;
             --roll-barcode-height: 28px;
+            --roll-barcode-width: 95%;
             --roll-font-scale: 1;
         }
 
@@ -142,6 +144,7 @@
         .diecut-barcode img {
             max-width: 100%;
             height: var(--diecut-barcode-height);
+            width: var(--diecut-barcode-width);
             display: block;
         }
 
@@ -227,8 +230,9 @@
         }
 
         .roll-barcode img {
-            max-width: 95%;
+            max-width: 100%;
             height: var(--roll-barcode-height);
+            width: var(--roll-barcode-width);
             display: block;
             margin: 0 auto;
         }
@@ -601,6 +605,12 @@
                                         min="15" max="45" step="1" value="25">
                                 </div>
                                 <div class="col-md-2 col-sm-4">
+                                    <label class="form-label mb-1 small fw-semibold">Barcode Width: <span
+                                            id="barcode-width-val">100</span>%</label>
+                                    <input type="range" class="form-range calibrator-input" id="barcode-width-slider"
+                                        min="40" max="100" step="1" value="100">
+                                </div>
+                                <div class="col-md-2 col-sm-4">
                                     <label class="form-label mb-1 small fw-semibold">Font Size: <span
                                             id="font-scale-val">100</span>%</label>
                                     <input type="range" class="form-range calibrator-input" id="font-scale-slider" min="70"
@@ -634,13 +644,19 @@
                                     <input type="range" class="form-range roll-calibrator-input"
                                         id="roll-left-margin-slider" min="-5" max="5" step="0.1" value="0.0">
                                 </div>
-                                <div class="col-md-3 col-sm-6">
+                                <div class="col-md-2 col-sm-6">
                                     <label class="form-label mb-1 small fw-semibold">Barcode Height: <span
                                             id="roll-barcode-height-val">28</span>px</label>
                                     <input type="range" class="form-range roll-calibrator-input"
                                         id="roll-barcode-height-slider" min="15" max="45" step="1" value="28">
                                 </div>
-                                <div class="col-md-3 col-sm-6">
+                                <div class="col-md-2 col-sm-6">
+                                    <label class="form-label mb-1 small fw-semibold">Barcode Width: <span
+                                            id="roll-barcode-width-val">95</span>%</label>
+                                    <input type="range" class="form-range roll-calibrator-input"
+                                        id="roll-barcode-width-slider" min="40" max="100" step="1" value="95">
+                                </div>
+                                <div class="col-md-2 col-sm-6">
                                     <label class="form-label mb-1 small fw-semibold">Font Size: <span
                                             id="roll-font-scale-val">100</span>%</label>
                                     <input type="range" class="form-range roll-calibrator-input" id="roll-font-scale-slider"
@@ -1043,6 +1059,7 @@
                 rowGap: 0.0,
                 colGap: 0.0,
                 barcodeHeight: 25,
+                barcodeWidth: 100,
                 fontScale: 100
             };
 
@@ -1062,6 +1079,7 @@
                 $('#row-gap-slider').val(cal.rowGap);
                 $('#col-gap-slider').val(cal.colGap);
                 $('#barcode-height-slider').val(cal.barcodeHeight);
+                $('#barcode-width-slider').val(cal.barcodeWidth);
                 $('#font-scale-slider').val(cal.fontScale);
 
                 // Set labels text
@@ -1070,6 +1088,7 @@
                 $('#row-gap-val').text(cal.rowGap.toFixed(1));
                 $('#col-gap-val').text(cal.colGap.toFixed(1));
                 $('#barcode-height-val').text(cal.barcodeHeight);
+                $('#barcode-width-val').text(cal.barcodeWidth);
                 $('#font-scale-val').text(cal.fontScale);
 
                 // Set CSS variables on root element
@@ -1079,6 +1098,7 @@
                 root.style.setProperty('--diecut-row-gap', cal.rowGap + 'mm');
                 root.style.setProperty('--diecut-col-gap', cal.colGap + 'mm');
                 root.style.setProperty('--diecut-barcode-height', cal.barcodeHeight + 'px');
+                root.style.setProperty('--diecut-barcode-width', cal.barcodeWidth + '%');
                 root.style.setProperty('--diecut-font-scale', (cal.fontScale / 100));
             }
 
@@ -1094,6 +1114,7 @@
                     rowGap: parseFloat($('#row-gap-slider').val()),
                     colGap: parseFloat($('#col-gap-slider').val()),
                     barcodeHeight: parseInt($('#barcode-height-slider').val()),
+                    barcodeWidth: parseInt($('#barcode-width-slider').val()),
                     fontScale: parseInt($('#font-scale-slider').val())
                 };
                 applyCalibration(newCal);
@@ -1111,6 +1132,7 @@
                 topMargin: 0.0,
                 leftMargin: 0.0,
                 barcodeHeight: 28,
+                barcodeWidth: 95,
                 fontScale: 100
             };
 
@@ -1128,12 +1150,14 @@
                 $('#roll-top-margin-slider').val(cal.topMargin);
                 $('#roll-left-margin-slider').val(cal.leftMargin);
                 $('#roll-barcode-height-slider').val(cal.barcodeHeight);
+                $('#roll-barcode-width-slider').val(cal.barcodeWidth);
                 $('#roll-font-scale-slider').val(cal.fontScale);
 
                 // Set labels text
                 $('#roll-top-margin-val').text(cal.topMargin.toFixed(1));
                 $('#roll-left-margin-val').text(cal.leftMargin.toFixed(1));
                 $('#roll-barcode-height-val').text(cal.barcodeHeight);
+                $('#roll-barcode-width-val').text(cal.barcodeWidth);
                 $('#roll-font-scale-val').text(cal.fontScale);
 
                 // Set CSS variables on root element
@@ -1141,6 +1165,7 @@
                 root.style.setProperty('--roll-top-margin', cal.topMargin + 'mm');
                 root.style.setProperty('--roll-left-margin', cal.leftMargin + 'mm');
                 root.style.setProperty('--roll-barcode-height', cal.barcodeHeight + 'px');
+                root.style.setProperty('--roll-barcode-width', cal.barcodeWidth + '%');
                 root.style.setProperty('--roll-font-scale', (cal.fontScale / 100));
             }
 
@@ -1154,6 +1179,7 @@
                     topMargin: parseFloat($('#roll-top-margin-slider').val()),
                     leftMargin: parseFloat($('#roll-left-margin-slider').val()),
                     barcodeHeight: parseInt($('#roll-barcode-height-slider').val()),
+                    barcodeWidth: parseInt($('#roll-barcode-width-slider').val()),
                     fontScale: parseInt($('#roll-font-scale-slider').val())
                 };
                 applyRollCalibration(newCal);
