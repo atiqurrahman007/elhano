@@ -217,6 +217,7 @@
     function cart_content(){
            $.ajax({
              type:"GET",
+             data: {type: 'edit'},
              url:"{{route('admin.order.cart_content')}}",
              dataType: "html",
              success: function(cartinfo){
@@ -235,7 +236,7 @@
           });
       }
 
-      $('#cart_add').on('change',function(e){
+      $(document).on('change', '#cart_add', function(e){
        var id =$(this).val();
         if(id){
             $.ajax({
@@ -250,7 +251,7 @@
             });
         }
        });
-     $(".cart_increment").click(function(e){
+     $(document).on('click', ".cart_increment", function(e){
          e.preventDefault();
          var id = $(this).data("id");
          var qty = $(this).val();
@@ -272,7 +273,7 @@
            });
          }
     });
-    $(".cart_decrement").click(function(e){
+    $(document).on('click', ".cart_decrement", function(e){
         e.preventDefault();
         var id = $(this).data("id");
         var qty = $(this).val();
@@ -289,7 +290,7 @@
           });
         }
    });
-    $(".cart_remove").click(function(e){
+    $(document).on('click', ".cart_remove", function(e){
         e.preventDefault();
         var id = $(this).data("id");
         if(id){
@@ -305,7 +306,7 @@
           });
         }
    });
-   $(".product_discount").change(function(){
+   $(document).on('change', ".product_discount", function(){
         var id = $(this).data("id");
         var discount = $(this).val();
           $.ajax({
@@ -319,7 +320,7 @@
           }
         });
    });
-    $(".cartclear").click(function(e){
+    $(document).on('click', ".cartclear", function(e){
       $.ajax({
            cache: false,
            type:"GET",

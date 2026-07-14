@@ -256,7 +256,7 @@
         <div id="pos-page-header" class="row align-items-center mb-2"
             style="flex-shrink: 0; background: #fff; padding: 10px 15px; border-radius: 8px; border: 1px solid #eee;">
             <div class="col-6">
-                <h4 class="mb-0 text-dark fw-bold"><i class="fas fa-calculator text-primary me-2"></i> POS - Point of Sale
+                <h4 class="mb-0 text-dark fw-bold"><i class="fas fa-calculator text-primary me-2"></i> POS - Edit Order #{{ $order->invoice_id }}
                 </h4>
             </div>
             <div class="col-6 text-end">
@@ -344,25 +344,26 @@
                         </div>
 
                         <!-- Customer Selection -->
-                        <form action="{{route('admin.order.store')}}" method="POST" class="pos_form"
+                        <form action="{{route('admin.order.pos_update')}}" method="POST" class="pos_form"
                             data-parsley-validate="" enctype="multipart/form-data">
                             @csrf
+                            <input type="hidden" name="order_id" value="{{$order->id}}">
                             <div class="mb-3">
                                 <div class="form-check mb-2">
                                     <label class="form-check-label" for="guest_customer">
                                         Guest Customer
                                     </label>
                                     <input class="form-check-input" type="checkbox" name="guest_customer" value="1"
-                                        id="guest_customer" checked>
+                                        id="guest_customer" {{ ($order->customer_id == 1 || ($order->shipping && $order->shipping->address == 'POS' && empty($order->shipping->name))) ? 'checked' : '' }}>
                                 </div>
 
                                 <div class="new_customer">
                                     <div class="row">
                                         <div class="col-md-6 mb-2">
-                                            <input type="text" class="form-control" name="name" placeholder="Customer Name">
+                                            <input type="text" class="form-control" name="name" placeholder="Customer Name" value="{{ $order->shipping ? $order->shipping->name : '' }}">
                                         </div>
                                         <div class="col-md-6 mb-2">
-                                            <input type="text" class="form-control" name="phone" placeholder="Phone Number">
+                                            <input type="text" class="form-control" name="phone" placeholder="Phone Number" value="{{ $order->shipping ? $order->shipping->phone : '' }}">
                                         </div>
                                     </div>
                                 </div>
@@ -1262,7 +1263,7 @@
                     contentType: false,
                     success: function (response) {
                         if (response.status === 'success') {
-                            toastr.success(response.message || "Order placed successfully!");
+                            toastr.success(response.message || "Order updated successfully!");
 
                              // Trigger print via background iframe (no new page/tab)
                              var printFrame = document.getElementById('pos-print-iframe');
@@ -1277,43 +1278,36 @@
                                  printFrame.style.border = '0';
                                  document.body.appendChild(printFrame);
                              }
-
-                             var isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+                              var isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullscreenElement || document.msFullscreenElement;
                               if (isFullscreen) {
                                   wasFullscreenBeforePrint = true;
                               }
 
                               printFrame.onload = function () {
-                                  if (printFrame.contentWindow) {
-                                      printFrame.contentWindow.addEventListener('beforeprint', function () {
-                                          var isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
-                                          if (isFullscreen) {
-                                              wasFullscreenBeforePrint = true;
-                                          }
-                                      });
-                                      printFrame.contentWindow.addEventListener('afterprint', function () {
-                                          if (wasFullscreenBeforePrint) {
-                                              window.restoreFullScreen();
-                                              wasFullscreenBeforePrint = false;
-                                          }
-                                      });
-                                  }
-                              };
+                                 if (printFrame.contentWindow) {
+                                     printFrame.contentWindow.addEventListener('beforeprint', function () {
+                                         var isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullscreenElement || document.msFullscreenElement;
+                                         if (isFullscreen) {
+                                             wasFullscreenBeforePrint = true;
+                                         }
+                                     });
+                                     printFrame.contentWindow.addEventListener('afterprint', function () {
+                                         if (wasFullscreenBeforePrint) {
+                                             window.restoreFullScreen();
+                                             wasFullscreenBeforePrint = false;
+                                         }
+                                     });
+                                 }
+                             };
 
                              printFrame.src = "{{ url('admin/order-print') }}?order_ids[]=" + response.order_id;
 
-                            // Reset customer fields
-                            $('input[name="name"]').val('');
-                            $('input[name="phone"]').val('');
-                            $('#guest_customer').prop('checked', true).trigger('change');
-                            $('#pos_discount_input').val(0);
-                            $('#pos_discount_type').val('flat');
-
-                            // Refresh POS cart content and details
-                            cart_content();
-                            cart_details();
+                             // Redirect back to order list after brief delay to allow print dialog loading
+                             setTimeout(function() {
+                                 window.location.href = "{{ route('admin.orders', ['slug' => 'all']) }}";
+                             }, 1500);
                         } else {
-                            toastr.error(response.message || "Failed to place order.");
+                            toastr.error(response.message || "Failed to update order.");
                         }
                     },
                     error: function (xhr) {
@@ -1325,7 +1319,7 @@
                             });
                             toastr.error(errorMsg);
                         } else {
-                            toastr.error("An error occurred while placing the order.");
+                            toastr.error("An error occurred while updating the order.");
                         }
                     }
                 });

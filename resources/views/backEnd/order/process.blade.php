@@ -40,7 +40,7 @@
                                 @foreach ($data->orderdetails as $key => $product)
                                     <tr>
                                         <td>{{ $key + 1 }}</td>
-                                        <td><img src="{{ asset($product->image ? $product->image->image : '') }}" height="50"
+                                        <td><img src="{{ asset($product->image ?: (optional($product->productImage)->image ?? '')) }}" height="50"
                                                 width="50" alt=""></td>
                                         <td>{{ $product->product_name }}</td>
                                     </tr>

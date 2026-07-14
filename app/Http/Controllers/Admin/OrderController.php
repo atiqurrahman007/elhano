@@ -111,7 +111,8 @@ class OrderController extends Controller
             if (empty($request->keyword)) {
                 $products = [];
             }
-            return view('backEnd.order.search', compact('products'));
+            $type = $request->type;
+            return view('backEnd.order.search', compact('products', 'type'));
         }
     }
 
@@ -725,9 +726,12 @@ class OrderController extends Controller
         //  return Cart::instance('sale')->content();
         return response()->json(compact('cartinfo'));
     }
-    public function cart_content()
+    public function cart_content(Request $request)
     {
         $cartinfo = Cart::instance('sale')->content();
+        if ($request->type == 'edit') {
+            return view('backEnd.order.edit_cart_content', compact('cartinfo'));
+        }
         return view('backEnd.order.cart_content', compact('cartinfo'));
     }
     public function cart_details()
@@ -1045,9 +1049,17 @@ class OrderController extends Controller
     public function order_report(Request $request)
     {
         $users = User::where('status', 1)->get();
-        $orders = OrderDetails::with('shipping', 'order')->whereHas('order', function ($query) {
-            $query->where('order_status', 6);
-        });
+        $statuses = OrderStatus::get();
+        
+        $status = $request->has('order_status') ? $request->order_status : 6;
+
+        $orders = OrderDetails::with('shipping', 'order');
+
+        if ($status) {
+            $orders = $orders->whereHas('order', function ($query) use ($status) {
+                $query->where('order_status', $status);
+            });
+        }
         if ($request->keyword) {
             $orders = $orders->where('name', 'LIKE', '%' . $request->keyword . "%");
         }
@@ -1056,14 +1068,58 @@ class OrderController extends Controller
                 $query->where('user_id', $request->user_id);
             });
         }
-        if ($request->start_date && $request->end_date) {
-            $orders = $orders->whereBetween('created_at', [$request->start_date, $request->end_date]);
+
+        $start_date = $request->start_date;
+        $end_date = $request->end_date;
+
+        if ($request->filter) {
+            switch ($request->filter) {
+                case 'today':
+                    $start_date = \Carbon\Carbon::today('Asia/Dhaka')->format('Y-m-d H:i:s');
+                    $end_date = \Carbon\Carbon::tomorrow('Asia/Dhaka')->subSecond()->format('Y-m-d H:i:s');
+                    break;
+                case 'yesterday':
+                    $start_date = \Carbon\Carbon::yesterday('Asia/Dhaka')->format('Y-m-d H:i:s');
+                    $end_date = \Carbon\Carbon::today('Asia/Dhaka')->subSecond()->format('Y-m-d H:i:s');
+                    break;
+                case 'this_week':
+                    $start_date = \Carbon\Carbon::now('Asia/Dhaka')->startOfWeek()->format('Y-m-d H:i:s');
+                    $end_date = \Carbon\Carbon::now('Asia/Dhaka')->endOfWeek()->format('Y-m-d H:i:s');
+                    break;
+                case 'last_week':
+                    $start_date = \Carbon\Carbon::now('Asia/Dhaka')->subWeek()->startOfWeek()->format('Y-m-d H:i:s');
+                    $end_date = \Carbon\Carbon::now('Asia/Dhaka')->subWeek()->endOfWeek()->format('Y-m-d H:i:s');
+                    break;
+                case 'this_month':
+                    $start_date = \Carbon\Carbon::now('Asia/Dhaka')->startOfMonth()->format('Y-m-d H:i:s');
+                    $end_date = \Carbon\Carbon::now('Asia/Dhaka')->endOfMonth()->format('Y-m-d H:i:s');
+                    break;
+                case 'last_month':
+                    $start_date = \Carbon\Carbon::now('Asia/Dhaka')->subMonth()->startOfMonth()->format('Y-m-d H:i:s');
+                    $end_date = \Carbon\Carbon::now('Asia/Dhaka')->subMonth()->endOfMonth()->format('Y-m-d H:i:s');
+                    break;
+                case 'this_year':
+                    $start_date = \Carbon\Carbon::now('Asia/Dhaka')->startOfYear()->format('Y-m-d H:i:s');
+                    $end_date = \Carbon\Carbon::now('Asia/Dhaka')->endOfYear()->format('Y-m-d H:i:s');
+                    break;
+            }
         }
+
+        if ($start_date && $end_date) {
+            $start = \Carbon\Carbon::parse($start_date, 'Asia/Dhaka')->setTimezone('UTC');
+            $end = \Carbon\Carbon::parse($end_date, 'Asia/Dhaka');
+            if (strlen($end_date) <= 10) {
+                $end = $end->endOfDay();
+            }
+            $end = $end->setTimezone('UTC');
+            $orders = $orders->whereBetween('created_at', [$start, $end]);
+        }
+
         $total_purchases = $orders->sum(DB::raw('purchase_price * qty'));
         $total_item = $orders->sum('qty');
         $total_sales = $orders->sum(DB::raw('sale_price * qty'));
         $orders = $orders->paginate(50);
-        return view('backEnd.reports.order', compact('orders', 'users', 'total_purchases', 'total_item', 'total_sales'));
+        return view('backEnd.reports.order', compact('orders', 'users', 'statuses', 'status', 'total_purchases', 'total_item', 'total_sales'));
     }
     public function return_report(Request $request)
     {
@@ -1154,5 +1210,226 @@ class OrderController extends Controller
         $amount = $request->amount;
         Session::put('cpaid', $amount);
         return response()->json($amount);
+    }
+
+    public function pos_order_edit($invoice_id)
+    {
+        $order = Order::where('id', $invoice_id)->with('orderdetails', 'shipping', 'payment', 'customer')->firstOrFail();
+        $products = Product::select('id', 'name', 'slug', 'new_price', 'old_price', 'type', 'stock')
+            ->where('status', 1)->with('image', 'variables')->get();
+        $categories = Category::where('status', 1)->get();
+        $shippingcharge = Shippingcharge::get();
+        
+        Cart::instance('sale')->destroy();
+        Session::put('product_discount', $order->discount);
+        Session::put('pos_shipping', $order->shipping_charge);
+        
+        foreach ($order->orderdetails as $ordetails) {
+            $imageUrl = $ordetails->getRawOriginal('image') ?: optional($ordetails->productImage)->image ?? '';
+            Cart::instance('sale')->add([
+                'id' => $ordetails->product_id,
+                'name' => $ordetails->product_name,
+                'qty' => $ordetails->qty,
+                'price' => $ordetails->sale_price,
+                'weight' => $ordetails->weight ?? 1,
+                'options' => [
+                    'image' => $imageUrl,
+                    'purchase_price' => $ordetails->purchase_price,
+                    'product_discount' => $ordetails->product_discount,
+                    'product_size' => $ordetails->product_size,
+                    'product_color' => $ordetails->product_color,
+                    'details_id' => $ordetails->id,
+                    'type' => $ordetails->product_type,
+                ],
+            ]);
+        }
+        
+        $cartinfo = Cart::instance('sale')->content();
+        $customers = Customer::where('status', 'active')->select('id', 'name', 'phone')->get();
+        
+        return view('backEnd.order.pos_edit', compact('products', 'categories', 'cartinfo', 'shippingcharge', 'order', 'customers'));
+    }
+
+    public function pos_order_update(Request $request)
+    {
+        if (!$request->guest_customer) {
+            $this->validate($request, [
+                'name' => 'required',
+                'phone' => 'required',
+            ]);
+        }
+
+        if (Cart::instance('sale')->count() <= 0) {
+            if ($request->ajax()) {
+                return response()->json(['status' => 'error', 'message' => 'Your shopping cart is empty']);
+            }
+            Toastr::error('Your shopping empty', 'Failed!');
+            return redirect()->back();
+        }
+
+        $subtotal = Cart::instance('sale')->subtotal();
+        $subtotal = str_replace(',', '', $subtotal);
+        $subtotal = str_replace('.00', '', $subtotal);
+        
+        $pos_discount_val = Session::get('pos_discount') ?? 0;
+        $pos_discount_type = Session::get('pos_discount_type') ?? 'flat';
+        if ($pos_discount_type == 'percent') {
+            $pos_discount = ($subtotal * $pos_discount_val) / 100;
+        } else {
+            $pos_discount = $pos_discount_val;
+        }
+        $discount = $pos_discount + (Session::get('product_discount') ?? 0);
+
+        if ($request->guest_customer) {
+            $customer_id = 1;
+            $name = 'Walk-in Customer';
+            $phone = '01700000000';
+            $address = 'POS';
+        } else {
+            $name = $request->name;
+            $phone = $request->phone;
+            $address = $request->address ?? 'POS';
+            
+            $exits_customer = Customer::where('phone', $phone)->select('phone', 'id')->first();
+            if ($exits_customer) {
+                $customer_id = $exits_customer->id;
+            } else {
+                $password = rand(111111, 999999);
+                $store = new Customer();
+                $store->name = $name;
+                $store->slug = $name;
+                $store->phone = $phone;
+                $store->password = bcrypt($password);
+                $store->verify = 1;
+                $store->status = 'active';
+                $store->save();
+                $customer_id = $store->id;
+            }
+        }
+
+        $order = Order::findOrFail($request->order_id);
+        
+        $isDeducted = \App\Service\InventoryService::isDeductedStatus($order->order_status);
+        if ($isDeducted) {
+            \App\Service\InventoryService::revertStock($order);
+        }
+
+        $order->amount = $subtotal - $discount;
+        $order->discount = $discount ? $discount : 0;
+        $order->shipping_charge = 0;
+        $order->customer_id = $customer_id;
+        $order->note = $request->note;
+        $order->save();
+
+        $shipping = Shipping::where('order_id', $order->id)->first();
+        if (!$shipping) {
+            $shipping = new Shipping();
+            $shipping->order_id = $order->id;
+        }
+        $shipping->customer_id = $customer_id;
+        if ($request->guest_customer) {
+            $shipping->name = null;
+            $shipping->phone = null;
+            $shipping->address = 'POS';
+            $shipping->area = null;
+        } else {
+            $shipping->name = $name;
+            $shipping->phone = $phone;
+            $shipping->address = $address;
+            $shipping->area = 'Free Shipping';
+        }
+        $shipping->save();
+
+        Payment::where('order_id', $order->id)->delete();
+
+        $payment_method = $request->payment_method ?? 'Cash';
+        $payment_status = $request->payment_status ?? 'paid';
+        $paid_amount = (int)round(floatval($request->paid_amount ?? $order->amount));
+
+        if ($payment_method === 'Multiple' && is_array($request->split_payments)) {
+            foreach ($request->split_payments as $split) {
+                $splitAmount = (int)round(floatval($split['amount'] ?? 0));
+                if ($splitAmount > 0) {
+                    $splitPayment = new Payment();
+                    $splitPayment->order_id = $order->id;
+                    $splitPayment->customer_id = $customer_id;
+                    $splitPayment->payment_method = $split['method'];
+                    $splitPayment->amount = $splitAmount;
+                    $splitPayment->received_amount = $splitAmount;
+                    $splitPayment->change_amount = 0;
+                    $splitPayment->payment_status = 'paid';
+                    $splitPayment->save();
+                }
+            }
+        } else {
+            $payment = new Payment();
+            $payment->order_id = $order->id;
+            $payment->customer_id = $customer_id;
+            $payment->payment_method = $payment_method;
+            $payment->amount = $paid_amount;
+            $payment->received_amount = (int)round(floatval($request->received_amount ?? $paid_amount));
+            $payment->change_amount = (int)round(floatval($request->change_amount ?? 0));
+            $payment->payment_status = $payment_status;
+            $payment->save();
+        }
+
+        foreach ($order->orderdetails as $orderdetail) {
+            $item = Cart::instance('sale')->content()->where('id', $orderdetail->product_id)->first();
+            if (!$item) {
+                $orderdetail->delete();
+            }
+        }
+
+        foreach (Cart::instance('sale')->content() as $cart) {
+            $exits = null;
+            if (!empty($cart->options->details_id)) {
+                $exits = OrderDetails::where('id', $cart->options->details_id)->first();
+            }
+            
+            if ($exits) {
+                $order_details = OrderDetails::find($exits->id);
+                $order_details->product_discount = $cart->options->product_discount;
+                $order_details->sale_price = $cart->price;
+                $order_details->qty = $cart->qty;
+                $order_details->save();
+            } else {
+                $order_details = new OrderDetails();
+                $order_details->order_id = $order->id;
+                $order_details->product_id = $cart->id;
+                $order_details->product_name = $cart->name;
+                $order_details->purchase_price = $cart->options->purchase_price;
+                $order_details->product_discount = $cart->options->product_discount;
+                $order_details->sale_price = $cart->price;
+                $order_details->qty = $cart->qty;
+                $order_details->product_size = $cart->options->product_size;
+                $order_details->product_color = $cart->options->product_color;
+                $order_details->product_type = $cart->options->type ?? (Product::where('id', $cart->id)->value('type') ?? 0);
+                $order_details->save();
+            }
+        }
+
+        $order->load('orderdetails');
+        if ($isDeducted) {
+            \App\Service\InventoryService::deductStock($order);
+        }
+
+        Cart::instance('sale')->destroy();
+        Session::forget('pos_shipping');
+        Session::forget('pos_discount');
+        Session::forget('pos_discount_type');
+        Session::forget('product_discount');
+        Session::forget('cpaid');
+        Session::forget('cdue');
+
+        if ($request->ajax()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Order updated successfully',
+                'order_id' => $order->id
+            ]);
+        }
+
+        Toastr::success('Order updated successfully', 'Success!');
+        return redirect()->route('admin.orders', ['slug' => 'all']);
     }
 }

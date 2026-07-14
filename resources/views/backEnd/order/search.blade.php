@@ -32,6 +32,7 @@
  function cart_content() {
   $.ajax({
    type: "GET",
+   data: {type: '{{ $type ?? "" }}'},
    url: "{{route('admin.order.cart_content')}}",
    dataType: "html",
    success: function (cartinfo) {

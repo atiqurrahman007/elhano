@@ -81,11 +81,18 @@
                                     <td>
                                         <div class="button-list custom-btn-list">
                                             <a href="{{ route('admin.order.invoice', ['invoice_id' => $value->id]) }}"
-                                                title="Invoice"><i class="fe-eye"></i></a>
+                                                title="Invoice" target="_blank"><i class="fe-eye"></i></a>
+                                            <a href="{{ route('admin.order.order_print', ['order_ids' => [$value->id]]) }}"
+                                                title="POS Invoice" target="_blank"><i class="fe-printer"></i></a>
                                             <a href="{{ route('admin.order.process', ['invoice_id' => $value->id]) }}"
                                                 title="Process"><i class="fe-settings"></i></a>
-                                            <a href="{{ route('admin.order.edit', ['invoice_id' => $value->id]) }}"
-                                                title="Edit"><i class="fe-edit"></i></a>
+                                            @if(!empty($value->user_id))
+                                                <a href="{{ route('admin.order.pos_edit', ['invoice_id' => $value->id]) }}"
+                                                    title="POS Edit"><i class="fe-edit"></i></a>
+                                            @else
+                                                <a href="{{ route('admin.order.edit', ['invoice_id' => $value->id]) }}"
+                                                    title="Edit"><i class="fe-edit"></i></a>
+                                            @endif
                                             <form method="post" action="{{ route('admin.order.destroy') }}"
                                                 class="d-inline">
                                                 @csrf

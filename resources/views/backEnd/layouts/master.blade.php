@@ -34,7 +34,7 @@
 
 <body data-layout-mode="default" data-theme="light" data-layout-width="fluid" data-topbar-color="dark"
     data-menu-position="fixed" data-leftbar-color="light" data-leftbar-size="default" data-sidebar-user="false"
-    class="{{ request()->routeIs('admin.order.create') ? 'pos-standalone-mode' : '' }}">
+    class="{{ (request()->routeIs('admin.order.create') || request()->routeIs('admin.order.pos_edit')) ? 'pos-standalone-mode' : '' }}">
     <!-- Begin page -->
     <div id="wrapper">
         <!-- Topbar Start -->
@@ -943,10 +943,12 @@
         }
         $(".search_click").on("input", function () {
             var keyword = $(this).val();
+            var searchType = "{{ request()->routeIs('admin.order.edit') ? 'edit' : '' }}";
             $.ajax({
                 type: "GET",
                 data: {
-                    keyword: keyword
+                    keyword: keyword,
+                    type: searchType
                 },
                 url: "{{ route('admin.livesearch') }}",
                 success: function (response) {

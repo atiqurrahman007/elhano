@@ -476,6 +476,8 @@ Route::group(['namespace' => 'Admin', 'middleware' => ['auth', 'lock', 'check_re
     Route::get('order/{slug}', [OrderController::class, 'index'])->name('admin.orders');
     Route::get('order/edit/{invoice_id}', [OrderController::class, 'order_edit'])->name('admin.order.edit');
     Route::post('order/update', [OrderController::class, 'order_update'])->name('admin.order.update');
+    Route::get('order/pos-edit/{invoice_id}', [OrderController::class, 'pos_order_edit'])->name('admin.order.pos_edit');
+    Route::post('order/pos-update', [OrderController::class, 'pos_order_update'])->name('admin.order.pos_update');
     Route::get('order/invoice/{invoice_id}', [OrderController::class, 'invoice'])->name('admin.order.invoice');
     Route::get('order/process/{invoice_id}', [OrderController::class, 'process'])->name('admin.order.process');
     Route::post('order/change', [OrderController::class, 'order_process'])->name('admin.order_change');

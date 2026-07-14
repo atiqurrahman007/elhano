@@ -25,6 +25,73 @@
       display: none !important;
     }
   }
+
+  /* Modern Filter Card Styling */
+  .modern-filter-card {
+      background: #ffffff;
+      border: 1px solid #eef2f7;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+      padding: 24px;
+      margin-bottom: 25px;
+      position: relative;
+  }
+  .modern-filter-card .form-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 700;
+      color: #5c68ff;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+  }
+  .modern-filter-card .form-label i {
+      margin-right: 6px;
+      font-size: 12px;
+      color: #727cf5;
+  }
+  .modern-filter-card .form-control {
+      border: 1px solid #d0d7de !important;
+      border-radius: 8px !important;
+      height: 38px !important;
+      font-size: 13px !important;
+      color: #313a46 !important;
+      transition: all 0.2s ease-in-out !important;
+  }
+  .modern-filter-card .form-control:focus {
+      border-color: #727cf5 !important;
+      box-shadow: 0 0 0 3px rgba(114, 124, 245, 0.15) !important;
+      outline: none !important;
+  }
+  
+  /* Select2 Custom styling within Modern Filter Card */
+  .modern-filter-card .select2-container--default .select2-selection--single {
+      border: 1px solid #d0d7de !important;
+      border-radius: 8px !important;
+      height: 38px !important;
+      transition: all 0.2s ease-in-out !important;
+  }
+  .modern-filter-card .select2-container--default .select2-selection--single .select2-selection__rendered {
+      line-height: 36px !important;
+      padding-left: 12px !important;
+      font-size: 13px !important;
+      color: #313a46 !important;
+  }
+  .modern-filter-card .select2-container--default .select2-selection--single .select2-selection__arrow {
+      height: 36px !important;
+  }
+  .modern-filter-card .select2-container--default.select2-container--open .select2-selection--single {
+      border-color: #727cf5 !important;
+      box-shadow: 0 0 0 3px rgba(114, 124, 245, 0.15) !important;
+  }
+  .modern-filter-btn {
+      transition: all 0.2s ease;
+  }
+  .modern-filter-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(114, 124, 245, 0.25) !important;
+  }
 </style>
 @endsection 
 <div class="container-fluid">
@@ -40,57 +107,87 @@
     <!-- end page title --> 
    <div class="row">
     <div class="col-12">
-        <div class="card">
-            <div class="card-body">
-                <form class="no-print">
-                    <div class="row">   
-                        <div class="col-sm-3">
-                            <div class="form-group">
-                               <label for="keyword" class="form-label">Keyword</label>
-                                <input type="text" value="{{request()->get('keyword')}}" class="form-control" name="keyword">
-                            </div>
+        <div class="modern-filter-card no-print">
+            <h5 class="mb-3 text-dark fw-bold d-flex align-items-center">
+                <i class="fas fa-sliders-h text-primary me-2"></i> Report Filter Options
+            </h5>
+            <form>
+                <div class="row align-items-end">   
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <div class="form-group mb-0">
+                           <label for="keyword" class="form-label"><i class="fas fa-search"></i> Keyword</label>
+                            <input type="text" value="{{request()->get('keyword')}}" class="form-control" name="keyword" placeholder="Search customer...">
                         </div>
-                        <!--col-sm-3-->
-                        <div class="col-sm-3">
-                            <div class="form-group mb-3">
-                                <label for="user_id" class="form-label">Assign User </label>
-                                <select class="form-control select2 @error('user_id') is-invalid @enderror" name="user_id" value="{{ old('user_id') }}" >
-                                    <option value="">Select..</option>
-                                    @foreach($users as $key=>$value)
-                                        <option value="{{$value->id}}" @if(request()->get('user_id') == $value->id) selected @endif>{{$value->name}}</option>
-                                    @endforeach
-                                </select>
-                                @error('user_id')
-                                <span class="invalid-feedback" role="alert">
-                                    <strong>{{ $message }}</strong>
-                                </span>
-                                @enderror
-                            </div>
+                    </div>
+                    <!--col-->
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <div class="form-group mb-0">
+                            <label for="user_id" class="form-label"><i class="fas fa-user-tie"></i> Assign User</label>
+                            <select class="form-control select2 @error('user_id') is-invalid @enderror" name="user_id" value="{{ old('user_id') }}" >
+                                <option value="">Select..</option>
+                                @foreach($users as $key=>$value)
+                                    <option value="{{$value->id}}" @if(request()->get('user_id') == $value->id) selected @endif>{{$value->name}}</option>
+                                @endforeach
+                            </select>
+                            @error('user_id')
+                            <span class="invalid-feedback" role="alert">
+                                <strong>{{ $message }}</strong>
+                            </span>
+                            @enderror
                         </div>
-                        <!-- col end -->
-                        <div class="col-sm-3">
-                            <div class="form-group">
-                               <label for="start_date" class="form-label">Start Date</label>
-                                <input type="date" value="{{request()->get('start_date')}}"  class="form-control flatdate" name="start_date">
-                            </div>
+                    </div>
+                    <!--col-->
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <div class="form-group mb-0">
+                            <label for="order_status" class="form-label"><i class="fas fa-info-circle"></i> Order Status</label>
+                            <select class="form-control select2" name="order_status">
+                                <option value="">All Status</option>
+                                @foreach($statuses as $st)
+                                    <option value="{{$st->id}}" @if($status == $st->id) selected @endif>{{$st->name}}</option>
+                                @endforeach
+                            </select>
                         </div>
-                        <!--col-sm-3--> 
-                        <div class="col-sm-3">
-                            <div class="form-group">
-                               <label for="end_date" class="form-label">End Date</label>
-                                <input type="date" value="{{request()->get('end_date')}}" class="form-control flatdate" name="end_date">
-                            </div>
+                    </div>
+                    <!--col-->
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <div class="form-group mb-0">
+                            <label for="filter" class="form-label"><i class="fas fa-filter"></i> Quick Filter</label>
+                            <select class="form-control select2" name="filter" id="filter-select">
+                                <option value="">Choose Period...</option>
+                                <option value="today" @if(request()->get('filter') == 'today') selected @endif>Today</option>
+                                <option value="yesterday" @if(request()->get('filter') == 'yesterday') selected @endif>Yesterday</option>
+                                <option value="this_week" @if(request()->get('filter') == 'this_week') selected @endif>This Week</option>
+                                <option value="last_week" @if(request()->get('filter') == 'last_week') selected @endif>Last Week</option>
+                                <option value="this_month" @if(request()->get('filter') == 'this_month') selected @endif>This Month</option>
+                                <option value="last_month" @if(request()->get('filter') == 'last_month') selected @endif>Last Month</option>
+                                <option value="this_year" @if(request()->get('filter') == 'this_year') selected @endif>This Year</option>
+                            </select>
                         </div>
-                        <!--col-sm-3-->
-                        <div class="col-sm-12">
-                            <div class="form-group mb-3">
-                                <button class="btn btn-primary">Submit</button>
-                                <a href="{{route('admin.order_report')}}" class="btn btn-danger">Reset</a>
-                            </div>
+                    </div>
+                    <!--col-->
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <div class="form-group mb-0">
+                           <label for="start_date" class="form-label"><i class="fas fa-calendar-alt"></i> Start Date</label>
+                            <input type="date" value="{{request()->get('start_date')}}"  class="form-control flatdate" name="start_date">
                         </div>
-                        <!-- col end -->
-                    </div>  
-                </form>
+                    </div>
+                    <!--col--> 
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <div class="form-group mb-0">
+                           <label for="end_date" class="form-label"><i class="fas fa-calendar-alt"></i> End Date</label>
+                            <input type="date" value="{{request()->get('end_date')}}" class="form-control flatdate" name="end_date">
+                        </div>
+                    </div>
+                    <!--col-->
+                    <div class="col-sm-12 text-end mt-2 mb-3">
+                        <div class="form-group mb-0">
+                            <button class="btn btn-primary modern-filter-btn rounded-pill px-4 shadow-sm me-2"><i class="fas fa-search me-1"></i> Filter Report</button>
+                            <a href="{{route('admin.order_report')}}" class="btn btn-outline-danger rounded-pill px-4"><i class="fas fa-undo me-1"></i> Reset</a>
+                        </div>
+                    </div>
+                </div>  
+            </form>
+        </div>
                 <div class="row mb-3">
                     <div class="col-sm-6 no-print">
                          {{$orders->links('pagination::bootstrap-4')}}
@@ -178,6 +275,20 @@
     $(document).ready(function () {
         $('.select2').select2();
         flatpickr(".flatdate", {});
+
+        $('#filter-select').on('change', function() {
+            if ($(this).val()) {
+                $('input[name="start_date"]').val('');
+                $('input[name="end_date"]').val('');
+                $(this).closest('form').submit();
+            }
+        });
+
+        $('.flatdate').on('change', function() {
+            if ($(this).val()) {
+                $('#filter-select').val('').trigger('change.select2');
+            }
+        });
     });
 </script>
 <script>

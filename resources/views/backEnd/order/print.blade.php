@@ -304,6 +304,11 @@
         window.onload = function() {
             window.print();
         }
+        window.onafterprint = function() {
+            if (window.parent && typeof window.parent.restoreFullScreen === 'function') {
+                window.parent.restoreFullScreen();
+            }
+        }
     </script>
 </body>
 </html>
