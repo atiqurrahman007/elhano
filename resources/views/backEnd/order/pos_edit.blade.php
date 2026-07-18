@@ -1,5 +1,5 @@
 @extends('backEnd.layouts.master')
-@section('title', 'POS Create')
+@section('title', 'Edit Order #' . $order->invoice_id)
 @section('css')
     <style>
         .pos_product_item {
@@ -77,194 +77,37 @@
             line-height: 28px;
         }
 
-        /* POS Full Screen Customizations (Standalone Mode) */
-        @media (min-width: 992px) {
-            body.pos-standalone-mode {
-                overflow: hidden !important;
-                height: 100vh !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-
-            body.pos-standalone-mode #wrapper {
-                height: 100vh !important;
-                overflow: hidden !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-
-            body.pos-standalone-mode .left-side-menu {
-                display: none !important;
-            }
-
-            body.pos-standalone-mode .navbar-custom {
-                display: none !important;
-            }
-
-            body.pos-standalone-mode .footer {
-                display: none !important;
-            }
-
-            body.pos-standalone-mode .content-page {
-                margin: 0 !important;
-                padding: 0 !important;
-                height: 100vh !important;
-                overflow: hidden !important;
-            }
-
-            body.pos-standalone-mode .content {
-                height: 100vh !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                overflow: hidden !important;
-            }
-
-            body.pos-standalone-mode .container-fluid {
-                height: 100% !important;
-                padding: 0 !important;
-                /* Absolute zero margins/padding */
-                margin: 0 !important;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-            }
-
-            /* Target the main POS row */
-            body.pos-standalone-mode .container-fluid>.row:last-child {
-                flex: 1;
-                height: calc(100% - 60px) !important;
-                margin: 0 !important;
-                padding: 10px !important;
-                /* Keep margins on the cards grid */
-                overflow: hidden;
-                display: flex;
-            }
-
-            body.pos-standalone-mode .container-fluid>.row:last-child>div[class^="col-"] {
-                height: 100% !important;
-                padding: 0 5px !important;
-                display: flex;
-                flex-direction: column;
-            }
-
-            body.pos-standalone-mode .container-fluid>.row:last-child>div[class^="col-"]>.card {
-                height: 100% !important;
-                margin-bottom: 0 !important;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-            }
-
-            body.pos-standalone-mode .container-fluid>.row:last-child>div[class^="col-"]>.card>.card-body {
-                flex: 1;
-                padding: 15px !important;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-            }
-
-            /* Left Column Scroll Lock */
-            body.pos-standalone-mode #product_grid {
-                flex: 1;
-                overflow-y: auto !important;
-                margin-top: 10px;
-                padding-bottom: 20px;
-            }
-
-            /* Right Column Scroll Lock */
-            body.pos-standalone-mode .pos_form {
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-            }
-
-            body.pos-standalone-mode .cart-table-container {
-                flex: 1;
-                overflow-y: auto !important;
-                max-height: none !important;
-                border: 1px solid #eee;
-                border-radius: 4px;
-                margin-bottom: 10px;
-            }
+        /* Order Edit Info Banner */
+        .order-edit-info {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%);
+            border: 1px solid #c8d6e5;
+            border-radius: 8px;
+            padding: 12px 16px;
         }
 
-        @media (max-width: 991.98px) {
-            body.pos-standalone-mode .content-page {
-                padding-top: 0 !important;
-            }
-        }
-
-        body.pos-standalone-mode .left-side-menu {
-            display: none !important;
-        }
-
-        body.pos-standalone-mode .footer {
-            display: none !important;
-        }
-
-        body.pos-standalone-mode #wrapper {
-            padding-left: 0 !important;
-        }
-
-        body.pos-standalone-mode .page-title-box {
-            display: none !important;
-        }
-
-        #pos-page-header {
-            position: sticky;
-            top: 0;
-            z-index: 999;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
-            background: #fff !important;
-        }
-
-        body.pos-standalone-mode #pos-page-header {
-            top: 0;
-            margin: 0 !important;
-            border-radius: 0 !important;
-            border-left: none !important;
-            border-right: none !important;
-            border-top: none !important;
-        }
-
-        body:not(.pos-standalone-mode) #pos-page-header {
-            top: 70px;
-            margin: 15px 0 !important;
+        .status-badge {
+            font-size: 0.8rem;
+            padding: 4px 12px;
+            border-radius: 20px;
         }
     </style>
     <link href="{{asset('public/backEnd')}}/assets/libs/select2/css/select2.min.css" rel="stylesheet" type="text/css" />
 @endsection
 
 @section('content')
-    <!-- Fullscreen Activation Overlay -->
-    <div id="fullscreen-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); z-index: 99999; align-items: center; justify-content: center;">
-        <div class="text-center p-5 rounded-4 shadow-lg border border-secondary" style="background: rgba(30, 41, 59, 0.8); max-width: 450px;">
-            <div class="avatar-lg mx-auto mb-4 bg-soft-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background: rgba(59, 130, 246, 0.1); margin: 0 auto;">
-                <i class="fas fa-calculator text-primary" style="font-size: 2.5rem; line-height: 80px;"></i>
-            </div>
-            <h3 class="text-white fw-bold mb-2">Initialize POS Terminal</h3>
-            <p class="text-muted mb-4">Entering standalone fullscreen mode for the best Point of Sale experience.</p>
-            <button id="start-pos-btn" class="btn btn-primary btn-lg rounded-pill px-5 shadow">
-                <i class="fas fa-play me-2"></i> Open POS Terminal
-            </button>
-        </div>
-    </div>
-
     <div class="container-fluid">
-        <!-- POS Header Row -->
-        <div id="pos-page-header" class="row align-items-center mb-2"
-            style="flex-shrink: 0; background: #fff; padding: 10px 15px; border-radius: 8px; border: 1px solid #eee;">
+        <!-- Page Header -->
+        <div class="row align-items-center mb-3"
+            style="background: #fff; padding: 12px 15px; border-radius: 8px; border: 1px solid #eee; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
             <div class="col-6">
-                <h4 class="mb-0 text-dark fw-bold"><i class="fas fa-calculator text-primary me-2"></i> POS - Edit Order #{{ $order->invoice_id }}
-                </h4>
+                <h4 class="mb-0 text-dark fw-bold"><i class="fas fa-edit text-primary me-2"></i> Edit Order #{{ $order->invoice_id }}</h4>
             </div>
             <div class="col-6 text-end">
-                <button id="pos-fullscreen-btn" class="btn btn-outline-primary btn-sm rounded-pill px-3">
-                    <i class="fas fa-expand me-1"></i> Full Screen
-                </button>
+                <a href="{{ route('admin.order.invoice', ['invoice_id' => $order->id]) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3" target="_blank">
+                    <i class="fas fa-file-invoice me-1"></i> Invoice
+                </a>
                 <a href="{{ route('admin.orders', ['slug' => 'all']) }}" class="btn btn-success btn-sm rounded-pill px-3 ms-2">
-                    <i class="fas fa-list me-1"></i> Sales List
+                    <i class="fas fa-list me-1"></i> Orders
                 </a>
                 <a href="{{ url('admin/dashboard') }}" class="btn btn-danger btn-sm rounded-pill px-3 ms-2">
                     <i class="fas fa-sign-out-alt me-1"></i> Exit
@@ -322,25 +165,14 @@
                 </div>
             </div>
 
-            <!-- Right Column: Cart -->
+            <!-- Right Column: Cart & Order Management -->
             <div class="col-lg-5">
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="card-title mb-0"><i class="fas fa-shopping-cart me-1"></i> Current Order</h5>
-                            <div class="btn-group btn-group-sm">
-                                <button type="button" class="btn btn-warning btn-sm text-white" id="hold-order-btn"><i
-                                        class="fas fa-pause me-1"></i> Hold</button>
-                                <button type="button" class="btn btn-info btn-sm position-relative ms-1 me-1 text-white"
-                                    id="view-holds-btn">
-                                    <i class="fas fa-list me-1"></i> Holds
-                                    <span
-                                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                                        id="holds-count">0</span>
-                                </button>
-                                <button type="button" class="btn btn-danger btn-sm cartclear"><i
-                                        class="fas fa-trash-alt"></i> Clear</button>
-                            </div>
+                            <h5 class="card-title mb-0"><i class="fas fa-shopping-cart me-1"></i> Order Items</h5>
+                            <button type="button" class="btn btn-danger btn-sm cartclear"><i
+                                    class="fas fa-trash-alt me-1"></i> Clear Cart</button>
                         </div>
 
                         <!-- Customer Selection -->
@@ -417,46 +249,79 @@
                                 </div>
                             </div>
 
-                            <!-- POS Payment Status Summary -->
-                            <div class="row text-center mt-3 py-2 bg-light rounded g-0 border">
-                                <div class="col-4 border-end">
-                                    <div class="text-muted small fw-semibold">Total Payable</div>
-                                    <div class="fs-5 fw-bold text-dark" id="summary_total">৳ 0</div>
+
+                            <!-- Exchange Adjustment Section -->
+                            <div class="card border-info mt-3" id="exchange_settlement_card">
+                                <div class="card-header bg-soft-info text-dark py-2 d-flex justify-content-between align-items-center" style="background: rgba(13, 202, 240, 0.1);">
+                                    <h6 class="mb-0 fw-bold text-info"><i class="fas fa-random me-1"></i> Exchange & Settlement</h6>
+                                    <span class="badge bg-info text-white" id="exchange_mode_badge">Exchange / Return</span>
                                 </div>
-                                <div class="col-4 border-end">
-                                    <div class="text-muted small fw-semibold">Paid Amount</div>
-                                    <div class="fs-5 fw-bold text-success" id="summary_paid">৳ 0</div>
-                                </div>
-                                <div class="col-4">
-                                    <div class="text-muted small fw-semibold">Due Amount</div>
-                                    <div class="fs-5 fw-bold text-danger" id="summary_due">৳ 0</div>
+                                <div class="card-body p-3">
+                                    <div class="row g-2 mb-2" style="font-size: 0.85rem;">
+                                        <div class="col-6 text-muted">Original Paid Amount:</div>
+                                        <div class="col-6 text-end fw-bold text-dark" id="exchange_original_paid">৳ 0.00</div>
+                                    </div>
+                                    <div class="row g-2 mb-2" style="font-size: 0.85rem;">
+                                        <div class="col-6 text-muted">New Order Total:</div>
+                                        <div class="col-6 text-end fw-bold text-dark" id="exchange_new_total">৳ 0.00</div>
+                                    </div>
+                                    <hr class="my-2">
+                                    
+                                    <!-- Status Message/Difference -->
+                                    <div class="mb-3" id="exchange_diff_status"></div>
+
+                                    <!-- Hidden Inputs to submit diff details -->
+                                    <input type="hidden" name="payment_difference" id="exchange_difference_input" value="0">
+
+                                    <!-- Payment Collection Fields (If Difference > 0) -->
+                                    <div id="exchange_payment_collection_fields" style="display:none;">
+                                        <div class="mb-2">
+                                            <label class="form-label small fw-semibold text-muted mb-1">Difference Payment Method</label>
+                                            <select name="diff_payment_method" class="form-select form-select-sm">
+                                                <option value="Cash">Cash</option>
+                                                <option value="Card">Card</option>
+                                                <option value="bKash">bKash</option>
+                                                <option value="Nagad">Nagad</option>
+                                                <option value="Rocket">Rocket</option>
+                                            </select>
+                                        </div>
+                                        <div class="row g-2 align-items-center">
+                                            <div class="col-6">
+                                                <label class="form-label small fw-semibold text-muted mb-1">Received Amt</label>
+                                                <input type="number" step="any" name="diff_received_amount" id="diff_received_amount" class="form-control form-control-sm text-end fw-bold text-success" placeholder="0.00">
+                                            </div>
+                                            <div class="col-6 text-end">
+                                                <span class="small fw-semibold text-muted d-block mb-1">Change Return</span>
+                                                <span class="fw-bold text-danger fs-5 d-block" id="diff_change_amount_text">৳ 0.00</span>
+                                                <input type="hidden" name="diff_change_amount" id="diff_change_amount_val" value="0">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Refund Fields (If Difference < 0) -->
+                                    <div id="exchange_refund_fields" style="display:none;">
+                                        <div class="mb-2">
+                                            <label class="form-label small fw-semibold text-muted mb-1">Refund Method</label>
+                                            <select name="diff_payment_method" class="form-select form-select-sm">
+                                                <option value="Cash">Cash</option>
+                                                <option value="bKash">bKash Mobile Wallet</option>
+                                                <option value="Nagad">Nagad Mobile Wallet</option>
+                                                <option value="Rocket">Rocket Mobile Wallet</option>
+                                                <option value="Adjust as Discount">Adjust as Discount</option>
+                                            </select>
+                                        </div>
+                                        <div class="alert alert-soft-success py-1 small mb-0 mt-2" style="background-color: rgba(40, 167, 69, 0.1); border-color: rgba(40, 167, 69, 0.2); color: #155724;">
+                                            <i class="fas fa-check-circle me-1"></i> Refund will be automatically adjusted in payments ledger.
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Hidden inputs to submit payment details -->
-                            <input type="hidden" name="payment_method" id="input_payment_method" value="Cash">
-                            <input type="hidden" name="payment_status" id="input_payment_status" value="paid">
-                            <input type="hidden" name="paid_amount" id="input_paid_amount" value="0">
-                            <input type="hidden" name="received_amount" id="input_received_amount" value="0">
-                            <input type="hidden" name="change_amount" id="input_change_amount" value="0">
-                            <!-- Container for split payments inputs -->
-                            <div id="split_payments_inputs" style="display:none;"></div>
-
-                            <!-- POS Payment Action Buttons -->
+                            <!-- Order Edit Action Buttons -->
                             <div class="row g-2 mt-3">
-                                <div class="col-4">
-                                    <button type="button" class="btn btn-info text-white w-100 py-3 fw-bold btn-payment-action" id="btn-payment-multiple">
-                                        <i class="fas fa-credit-card d-block mb-1 fs-5"></i> Multiple
-                                    </button>
-                                </div>
-                                <div class="col-4">
-                                    <button type="button" class="btn btn-success w-100 py-3 fw-bold btn-payment-action" id="btn-payment-cash">
-                                        <i class="fas fa-money-bill-wave d-block mb-1 fs-5"></i> Cash
-                                    </button>
-                                </div>
-                                <div class="col-4">
-                                    <button type="button" class="btn w-100 py-3 fw-bold text-white btn-payment-action" id="btn-payment-payall" style="background-color: #6f42c1;">
-                                        <i class="fas fa-money-bill-alt d-block mb-1 fs-5"></i> Pay All
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary w-100 py-3 fw-bold" id="btn-update-order">
+                                        <i class="fas fa-save d-block mb-1 fs-5"></i> Update Order
                                     </button>
                                 </div>
                             </div>
@@ -490,143 +355,6 @@
         </div>
     </div>
 
-    <!-- Holds List Modal -->
-    <div class="modal fade" id="holdsModal" tabindex="-1" role="dialog" aria-labelledby="holdsModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-info text-white">
-                    <h5 class="modal-title text-white" id="holdsModalLabel"><i class="fas fa-pause me-2"></i> Held Orders
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover table-striped mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="ps-3">Hold Note / ID</th>
-                                    <th>Date/Time</th>
-                                    <th>Customer</th>
-                                    <th>Items</th>
-                                    <th>Total</th>
-                                    <th class="pe-3 text-end">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="holds-list-tbody">
-                                <!-- Populated by JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Cash Payment Modal -->
-    <div class="modal fade" id="cashPaymentModal" tabindex="-1" role="dialog" aria-labelledby="cashPaymentModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title text-white" id="cashPaymentModalLabel"><i class="fas fa-money-bill-wave me-2"></i> Cash Payment</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3 text-center">
-                        <span class="text-muted d-block small">Total Payable</span>
-                        <h2 class="fw-bold text-dark" id="cash_modal_payable">৳ 0.00</h2>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Cash Received</label>
-                        <input type="number" class="form-control form-control-lg text-end fw-bold text-success" id="cash_received_input" placeholder="0.00" min="0" step="any" autofocus>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Quick Denominations</label>
-                        <div class="d-flex flex-wrap gap-2" id="quick_cash_denominations">
-                            <!-- Populated dynamically based on total -->
-                        </div>
-                    </div>
-                    <div class="p-3 bg-light rounded text-center mb-3">
-                        <span class="text-muted d-block small">Change Return</span>
-                        <h3 class="fw-bold text-danger" id="cash_modal_change">৳ 0.00</h3>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-success text-white px-4" id="submit_cash_payment"><i class="fas fa-check-circle me-1"></i> Submit & Print</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Multiple Payment Modal -->
-    <div class="modal fade" id="multiplePaymentModal" tabindex="-1" role="dialog" aria-labelledby="multiplePaymentModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-info text-white">
-                    <h5 class="modal-title text-white" id="multiplePaymentModalLabel"><i class="fas fa-credit-card me-2"></i> Split / Multiple Payment</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row mb-3 align-items-center">
-                        <div class="col-6 text-center border-end">
-                            <span class="text-muted d-block small">Total Payable</span>
-                            <h3 class="fw-bold text-dark" id="multiple_modal_payable">৳ 0.00</h3>
-                        </div>
-                        <div class="col-6 text-center">
-                            <span class="text-muted d-block small">Remaining / Due</span>
-                            <h3 class="fw-bold text-danger" id="multiple_modal_due">৳ 0.00</h3>
-                        </div>
-                    </div>
-                    
-                    <div class="table-responsive">
-                        <table class="table table-bordered align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Payment Method</th>
-                                    <th style="width: 250px;">Amount Paid</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><i class="fas fa-money-bill-wave text-success me-2"></i> Cash</td>
-                                    <td><input type="number" class="form-control text-end fw-bold split-amount" data-method="Cash" placeholder="0.00" min="0" step="any"></td>
-                                </tr>
-                                <tr>
-                                    <td><i class="fas fa-credit-card text-primary me-2"></i> Card</td>
-                                    <td><input type="number" class="form-control text-end fw-bold split-amount" data-method="Card" placeholder="0.00" min="0" step="any"></td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <span class="badge text-white px-2 py-1 me-2" style="background-color: #e2136e; font-size: 0.75rem; border-radius: 4px;">bKash</span> bKash Mobile Wallet
-                                    </td>
-                                    <td><input type="number" class="form-control text-end fw-bold split-amount" data-method="bKash" placeholder="0.00" min="0" step="any"></td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <span class="badge text-white px-2 py-1 me-2" style="background-color: #f7941d; font-size: 0.75rem; border-radius: 4px;">Nagad</span> Nagad Mobile Wallet
-                                    </td>
-                                    <td><input type="number" class="form-control text-end fw-bold split-amount" data-method="Nagad" placeholder="0.00" min="0" step="any"></td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <span class="badge text-white px-2 py-1 me-2" style="background-color: #8c3c96; font-size: 0.75rem; border-radius: 4px;">Rocket</span> Rocket Mobile Wallet
-                                    </td>
-                                    <td><input type="number" class="form-control text-end fw-bold split-amount" data-method="Rocket" placeholder="0.00" min="0" step="any"></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-info text-white px-4" id="submit_multiple_payment" disabled><i class="fas fa-check-circle me-1"></i> Submit & Print</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
         $(document).ready(function () {
             $(".select2").select2();
@@ -642,7 +370,7 @@
                 }
             }).trigger('change');
 
-            // Live Search — filters grid by name or barcode, and auto-adds on exact barcode match (either automatically on typing, or on Enter key)
+            // Live Search — filters grid by name or barcode, and auto-adds on exact barcode match
             var isSearchingBarcode = false;
 
             // Auto-add product to cart if exact barcode matches
@@ -926,323 +654,60 @@
                 });
             });
 
-            // ── Holds LocalStorage & UI Event Listeners ──
-            function getHeldOrders() {
-                return JSON.parse(localStorage.getItem('pos_held_orders') || '[]');
-            }
+            // ── Exchange Difference Calculations ──
+            var originalPaid = parseFloat("{{ $order->payments->sum('amount') }}") || 0;
+            
+            window.calculateExchangeDifference = function() {
+                var newTotal = parseFloat($('#cart_total_payable_val').data('value')) || 0;
+                var diff = newTotal - originalPaid;
 
-            function saveHeldOrders(holds) {
-                localStorage.setItem('pos_held_orders', JSON.stringify(holds));
-                updateHoldsCount();
-            }
+                $('#exchange_original_paid').text('৳ ' + originalPaid.toFixed(2));
+                $('#exchange_new_total').text('৳ ' + newTotal.toFixed(2));
+                $('#exchange_difference_input').val(diff.toFixed(2));
 
-            function updateHoldsCount() {
-                var count = getHeldOrders().length;
-                $('#holds-count').text(count);
-                if (count > 0) {
-                    $('#holds-count').removeClass('bg-secondary').addClass('bg-danger');
+                if (diff > 0) {
+                    $('#exchange_diff_status').html('<div class="alert alert-warning py-2 mb-0 fw-semibold" style="background-color: rgba(255, 193, 7, 0.1); border-color: rgba(255, 193, 7, 0.2); color: #856404;"><i class="fas fa-exclamation-triangle me-1"></i> Extra Payment Due: ৳ ' + diff.toFixed(2) + '</div>');
+                    $('#exchange_payment_collection_fields').show();
+                    $('#exchange_refund_fields').hide();
+                    $('#diff_received_amount').attr('required', true);
+                    updateDiffChange();
+                } else if (diff < 0) {
+                    var refundAmt = Math.abs(diff);
+                    $('#exchange_diff_status').html('<div class="alert alert-info py-2 mb-0 fw-semibold" style="background-color: rgba(23, 162, 184, 0.1); border-color: rgba(23, 162, 184, 0.2); color: #0c5460;"><i class="fas fa-info-circle me-1"></i> Refund to Customer: ৳ ' + refundAmt.toFixed(2) + '</div>');
+                    $('#exchange_payment_collection_fields').hide();
+                    $('#exchange_refund_fields').show();
+                    $('#diff_received_amount').removeAttr('required').val('');
                 } else {
-                    $('#holds-count').removeClass('bg-danger').addClass('bg-secondary');
+                    $('#exchange_diff_status').html('<div class="alert alert-success py-2 mb-0 fw-semibold" style="background-color: rgba(40, 167, 69, 0.1); border-color: rgba(40, 167, 69, 0.2); color: #155724;"><i class="fas fa-check-circle me-1"></i> Balanced (No adjustment needed)</div>');
+                    $('#exchange_payment_collection_fields').hide();
+                    $('#exchange_refund_fields').hide();
+                    $('#diff_received_amount').removeAttr('required').val('');
                 }
-            }
+            };
 
-            // Initialize hold counter
-            updateHoldsCount();
-
-            // Click "Hold Order"
-            $('#hold-order-btn').on('click', function () {
-                var cartRows = $('#cartTable tr').not('#empty-table-row');
-                if (cartRows.length === 0 || $('#cartTable').text().indexOf('No products selected') > -1) {
-                    toastr.warning("Cart is empty. Cannot hold empty order.");
-                    return;
-                }
-
-                var note = prompt("Enter a reference note or customer name to hold this order:");
-                if (note === null) return;
-                note = note.trim();
-                if (note === "") {
-                    note = "Table " + (getHeldOrders().length + 1);
-                }
-
-                $.ajax({
-                    type: "GET",
-                    url: "{{ route('admin.order.cart_json') }}",
-                    dataType: "json",
-                    success: function (response) {
-                        if (!response.items || response.items.length === 0) {
-                            toastr.warning("Cart is empty.");
-                            return;
-                        }
-
-                        var holdOrder = {
-                            id: 'hold_' + Date.now(),
-                            note: note,
-                            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                            date: new Date().toLocaleDateString(),
-                            customer: {
-                                name: $('input[name="name"]').val(),
-                                phone: $('input[name="phone"]').val(),
-                                address: $('input[name="address"]').val(),
-                                area: $('#area').val(),
-                                guest: $('#guest_customer').is(':checked')
-                            },
-                            cart: response
-                        };
-
-                        var holds = getHeldOrders();
-                        holds.push(holdOrder);
-                        saveHeldOrders(holds);
-
-                        // Clear active cart & customer fields
-                        $.ajax({
-                            url: "{{route('admin.order.cart_clear')}}",
-                            success: function () {
-                                $('input[name="name"]').val('');
-                                $('input[name="phone"]').val('');
-                                $('#guest_customer').prop('checked', true).trigger('change');
-                                $('#pos_discount_input').val(0);
-                                $('#pos_discount_type').val('flat');
-
-                                cart_content();
-                                cart_details();
-                                toastr.success("Order put on hold successfully!");
-                            }
-                        });
-                    },
-                    error: function () {
-                        toastr.error("Failed to hold order");
-                    }
-                });
-            });
-
-            // Click "View Holds"
-            $('#view-holds-btn').on('click', function () {
-                var holds = getHeldOrders();
-                var tbody = $('#holds-list-tbody');
-                tbody.empty();
-
-                if (holds.length === 0) {
-                    tbody.append('<tr><td colspan="6" class="text-center py-4 text-muted">No orders currently on hold.</td></tr>');
-                } else {
-                    $.each(holds, function (index, hold) {
-                        var itemsCount = hold.cart.items.length;
-                        var subtotal = parseFloat(hold.cart.pos_shipping || 0);
-                        $.each(hold.cart.items, function (i, item) {
-                            subtotal += (parseFloat(item.price) * parseInt(item.qty));
-                        });
-                        var totalDiscount = parseFloat(hold.cart.pos_discount || 0) + parseFloat(hold.cart.product_discount || 0);
-                        var grandTotal = Math.max(0, subtotal - totalDiscount);
-
-                        var customerName = hold.customer.guest ? '<span class="badge bg-secondary">Guest</span>' : (hold.customer.name || 'N/A');
-                        var customerPhone = hold.customer.phone ? '<br><small class="text-muted">' + hold.customer.phone + '</small>' : '';
-
-                        var tr = '<tr>' +
-                            '<td class="ps-3 fw-bold text-primary">' + hold.note + '</td>' +
-                            '<td>' + hold.date + '<br><small class="text-muted">' + hold.time + '</small></td>' +
-                            '<td>' + customerName + customerPhone + '</td>' +
-                            '<td>' + itemsCount + ' item(s)</td>' +
-                            '<td class="fw-bold">৳ ' + grandTotal.toLocaleString() + '</td>' +
-                            '<td class="pe-3 text-end">' +
-                            '<div class="btn-group btn-group-sm">' +
-                            '<button type="button" class="btn btn-success retrieve-hold-btn text-white" data-id="' + hold.id + '"><i class="fas fa-play me-1"></i> Retrieve</button>' +
-                            '<button type="button" class="btn btn-outline-danger delete-hold-btn" data-id="' + hold.id + '"><i class="fas fa-trash-alt"></i></button>' +
-                            '</div>' +
-                            '</td>' +
-                            '</tr>';
-                        tbody.append(tr);
-                    });
-                }
-                $('#holdsModal').modal('show');
-            });
-
-            // Retrieve Hold Order
-            $(document).on('click', '.retrieve-hold-btn', function () {
-                var holdId = $(this).data('id');
-                var holds = getHeldOrders();
-                var hold = holds.find(function (h) { return h.id === holdId; });
-
-                if (!hold) {
-                    toastr.error("Hold order not found.");
-                    return;
-                }
-
-                $.ajax({
-                    type: "POST",
-                    url: "{{ route('admin.order.cart_hold_retrieve') }}",
-                    data: {
-                        _token: "{{ csrf_token() }}",
-                        items: hold.cart.items,
-                        pos_discount: hold.cart.pos_discount,
-                        pos_discount_type: hold.cart.pos_discount_type || 'flat',
-                        pos_shipping: hold.cart.pos_shipping
-                    },
-                    dataType: "json",
-                    success: function (response) {
-                        if (response.status === 'success') {
-                            if (hold.customer.guest) {
-                                $('#guest_customer').prop('checked', true).trigger('change');
-                            } else {
-                                $('#guest_customer').prop('checked', false).trigger('change');
-                                $('input[name="name"]').val(hold.customer.name);
-                                $('input[name="phone"]').val(hold.customer.phone);
-                            }
-
-                            $('#pos_discount_input').val(hold.cart.pos_discount || 0);
-                            $('#pos_discount_type').val(hold.cart.pos_discount_type || 'flat');
-
-                            cart_content();
-                            cart_details();
-
-                            var newHolds = holds.filter(function (h) { return h.id !== holdId; });
-                            saveHeldOrders(newHolds);
-
-                            $('#holdsModal').modal('hide');
-                            toastr.success("Order retrieved successfully!");
-                        } else {
-                            toastr.error("Failed to retrieve order items.");
-                        }
-                    },
-                    error: function () {
-                        toastr.error("Server error retrieving order");
-                    }
-                });
-            });
-
-            // Delete Hold Order
-            $(document).on('click', '.delete-hold-btn', function () {
-                if (!confirm("Are you sure you want to delete this held order?")) return;
-
-                var holdId = $(this).data('id');
-                var holds = getHeldOrders();
-                var newHolds = holds.filter(function (h) { return h.id !== holdId; });
-                saveHeldOrders(newHolds);
-
-                $('#view-holds-btn').trigger('click');
-                toastr.success("Held order deleted successfully.");
-            });
-
-            // ── Full Screen Toggle Logic ──
-            function toggleFullScreen() {
-                if (!document.fullscreenElement &&
-                    !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
-                    if (document.documentElement.requestFullscreen) {
-                        document.documentElement.requestFullscreen();
-                    } else if (document.documentElement.msRequestFullscreen) {
-                        document.documentElement.msRequestFullscreen();
-                    } else if (document.documentElement.mozRequestFullScreen) {
-                        document.documentElement.mozRequestFullScreen();
-                    } else if (document.documentElement.webkitRequestFullscreen) {
-                        document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
-                    }
-                } else {
-                    if (document.exitFullscreen) {
-                        document.exitFullscreen();
-                    } else if (document.msExitFullscreen) {
-                        document.msExitFullscreen();
-                    } else if (document.mozCancelFullScreen) {
-                        document.mozCancelFullScreen();
-                    } else if (document.webkitExitFullscreen) {
-                        document.webkitExitFullscreen();
+            window.updateDiffChange = function() {
+                var diff = parseFloat($('#exchange_difference_input').val()) || 0;
+                var received = parseFloat($('#diff_received_amount').val()) || 0;
+                if (diff > 0) {
+                    var change = Math.max(0, received - diff);
+                    $('#diff_change_amount_text').text('৳ ' + change.toFixed(2));
+                    $('#diff_change_amount_val').val(change.toFixed(2));
+                    if (received >= diff) {
+                        $('#diff_change_amount_text').removeClass('text-danger').addClass('text-success');
+                    } else {
+                        $('#diff_change_amount_text').removeClass('text-success').addClass('text-danger');
                     }
                 }
-            }
+            };
 
-            function updateFullscreenButton() {
-                var isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
-                var btn = $('#pos-fullscreen-btn');
-                if (isFullscreen) {
-                    $('body').addClass('pos-standalone-mode');
-                    btn.html('<i class="fas fa-compress me-1"></i> Exit Full');
-                    btn.removeClass('btn-outline-primary').addClass('btn-primary text-white');
-                } else {
-                    $('body').removeClass('pos-standalone-mode');
-                    btn.html('<i class="fas fa-expand me-1"></i> Full Screen');
-                    btn.removeClass('btn-primary text-white').addClass('btn-outline-primary');
-                }
-            }
-
-            $(document).on('fullscreenchange webkitfullscreenchange mozfullscreenchange MSFullscreenChange', function () {
-                updateFullscreenButton();
+            $(document).on('input', '#diff_received_amount', function () {
+                updateDiffChange();
             });
 
-            $('#pos-fullscreen-btn').on('click', function (e) {
-                e.preventDefault();
-                toggleFullScreen();
-            });
+            // Initial call
+            setTimeout(calculateExchangeDifference, 300);
 
-            // ── Auto Full Screen on page load / overlay interaction ──
-            function autoFullScreen() {
-                if (document.documentElement.requestFullscreen) {
-                    document.documentElement.requestFullscreen()
-                        .then(() => {
-                            $('#fullscreen-overlay').remove();
-                        })
-                        .catch(err => {
-                            console.log("Auto-fullscreen blocked, showing start POS overlay.");
-                            $('#fullscreen-overlay').css('display', 'flex');
-                        });
-                } else {
-                    $('#fullscreen-overlay').css('display', 'flex');
-                }
-            }
-
-            // Handle start pos button click
-            $(document).on('click', '#start-pos-btn', function () {
-                toggleFullScreen();
-                $('#fullscreen-overlay').remove();
-            });
-
-            // Trigger auto-fullscreen
-            autoFullScreen();
-
-            // ── Full Screen Restoration after Print ──
-            var wasFullscreenBeforePrint = false;
-
-            window.addEventListener('beforeprint', function () {
-                var isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
-                if (isFullscreen) {
-                    wasFullscreenBeforePrint = true;
-                }
-            });
-
-            window.addEventListener('afterprint', function () {
-                if (wasFullscreenBeforePrint) {
-                    window.restoreFullScreen();
-                    wasFullscreenBeforePrint = false;
-                }
-            });
-
-            window.restoreFullScreen = function () {
-                setTimeout(function () {
-                    var isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
-                    if (!isFullscreen) {
-                        var promise = null;
-                        if (document.documentElement.requestFullscreen) {
-                            promise = document.documentElement.requestFullscreen();
-                        } else if (document.documentElement.webkitRequestFullscreen) {
-                            promise = document.documentElement.webkitRequestFullscreen();
-                        } else if (document.documentElement.mozRequestFullScreen) {
-                            promise = document.documentElement.mozRequestFullScreen();
-                        } else if (document.documentElement.msRequestFullscreen) {
-                            promise = document.documentElement.msRequestFullscreen();
-                        }
-
-                        if (promise) {
-                            promise.catch(function (err) {
-                                console.log("Fullscreen restoration rejected:", err);
-                                // Fallback: restore on next user interaction (click, keydown, mousedown)
-                                $(document).one('click keydown mousedown', function () {
-                                    if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
-                                        toggleFullScreen();
-                                    }
-                                });
-                            });
-                        }
-                    }
-                }, 300);
-            }
-
-            // ── AJAX Order Submission & Auto Print ──
+            // ── AJAX Order Update Submission ──
             $(document).on('submit', '.pos_form', function (e) {
                 e.preventDefault();
 
@@ -1252,8 +717,21 @@
                     return;
                 }
 
+                // Check difference and received amount
+                var diff = parseFloat($('#exchange_difference_input').val()) || 0;
+                if (diff > 0) {
+                    var received = parseFloat($('#diff_received_amount').val()) || 0;
+                    if (received < diff) {
+                        toastr.error("Received amount must be equal to or greater than the due difference!");
+                        return;
+                    }
+                }
+
                 var url = form.attr('action');
                 var formData = new FormData(this);
+
+                // Disable the submit button to prevent double-clicks
+                $('#btn-update-order').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Updating...');
 
                 $.ajax({
                     type: "POST",
@@ -1265,49 +743,13 @@
                         if (response.status === 'success') {
                             toastr.success(response.message || "Order updated successfully!");
 
-                             // Trigger print via background iframe (no new page/tab)
-                             var printFrame = document.getElementById('pos-print-iframe');
-                             if (!printFrame) {
-                                 printFrame = document.createElement('iframe');
-                                 printFrame.id = 'pos-print-iframe';
-                                 printFrame.style.position = 'fixed';
-                                 printFrame.style.right = '0';
-                                 printFrame.style.bottom = '0';
-                                 printFrame.style.width = '0';
-                                 printFrame.style.height = '0';
-                                 printFrame.style.border = '0';
-                                 document.body.appendChild(printFrame);
-                             }
-                              var isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullscreenElement || document.msFullscreenElement;
-                              if (isFullscreen) {
-                                  wasFullscreenBeforePrint = true;
-                              }
-
-                              printFrame.onload = function () {
-                                 if (printFrame.contentWindow) {
-                                     printFrame.contentWindow.addEventListener('beforeprint', function () {
-                                         var isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullscreenElement || document.msFullscreenElement;
-                                         if (isFullscreen) {
-                                             wasFullscreenBeforePrint = true;
-                                         }
-                                     });
-                                     printFrame.contentWindow.addEventListener('afterprint', function () {
-                                         if (wasFullscreenBeforePrint) {
-                                             window.restoreFullScreen();
-                                             wasFullscreenBeforePrint = false;
-                                         }
-                                     });
-                                 }
-                             };
-
-                             printFrame.src = "{{ url('admin/order-print') }}?order_ids[]=" + response.order_id;
-
-                             // Redirect back to order list after brief delay to allow print dialog loading
-                             setTimeout(function() {
-                                 window.location.href = "{{ route('admin.orders', ['slug' => 'all']) }}";
-                             }, 1500);
+                            // Redirect back to order list after brief delay
+                            setTimeout(function() {
+                                window.location.href = "{{ route('admin.orders', ['slug' => 'all']) }}";
+                            }, 1000);
                         } else {
                             toastr.error(response.message || "Failed to update order.");
+                            $('#btn-update-order').prop('disabled', false).html('<i class="fas fa-save d-block mb-1 fs-5"></i> Update Order');
                         }
                     },
                     error: function (xhr) {
@@ -1321,190 +763,9 @@
                         } else {
                             toastr.error("An error occurred while updating the order.");
                         }
+                        $('#btn-update-order').prop('disabled', false).html('<i class="fas fa-save d-block mb-1 fs-5"></i> Update Order');
                     }
                 });
-            });
-
-            // ── POS Payment Operations ──
-            
-            window.updatePaymentSummary = function () {
-                var total = parseFloat($('#cart_total_payable_val').data('value') || 0);
-                $('#summary_total').text('৳ ' + total.toFixed(2));
-                
-                var method = $('#input_payment_method').val();
-                var paid = parseFloat($('#input_paid_amount').val() || 0);
-                
-                if (method === 'Cash' || paid === 0) {
-                    paid = total;
-                    $('#input_paid_amount').val(total);
-                }
-                
-                var due = Math.max(0, total - paid);
-                $('#summary_paid').text('৳ ' + paid.toFixed(2));
-                $('#summary_due').text('৳ ' + due.toFixed(2));
-            };
-
-            // Initial call to sync summary on page load
-            setTimeout(window.updatePaymentSummary, 500);
-
-            // Click Cash Button
-            $('#btn-payment-cash').on('click', function () {
-                var total = parseFloat($('#cart_total_payable_val').data('value') || 0);
-                if (total <= 0) {
-                    toastr.warning("Cart is empty.");
-                    return;
-                }
-                $('#cash_modal_payable').text('৳ ' + total.toFixed(2));
-                $('#cash_received_input').val('').attr('placeholder', total.toFixed(2));
-                $('#cash_modal_change').text('৳ 0.00').removeClass('text-success').addClass('text-danger');
-                
-                // Populate quick denominations
-                var denomContainer = $('#quick_cash_denominations');
-                denomContainer.empty();
-                var nextRound = Math.ceil(total / 50) * 50;
-                var denoms = [total, nextRound, nextRound + 50, nextRound + 100, Math.ceil(total / 500) * 500, Math.ceil(total / 1000) * 1000];
-                // remove duplicates and filter out values smaller than total
-                denoms = [...new Set(denoms)].filter(v => v >= total && v > 0);
-                $.each(denoms, function(i, val) {
-                    denomContainer.append('<button type="button" class="btn btn-outline-success btn-sm quick-denom-btn" data-value="' + val + '">৳ ' + val + '</button>');
-                });
-                
-                $('#cashPaymentModal').modal('show');
-            });
-
-            // Click quick denomination buttons
-            $(document).on('click', '.quick-denom-btn', function () {
-                var val = parseFloat($(this).data('value'));
-                $('#cash_received_input').val(val).trigger('input');
-            });
-
-            // Calculate Cash Change Return
-            $('#cash_received_input').on('input', function () {
-                var total = parseFloat($('#cart_total_payable_val').data('value') || 0);
-                var received = parseFloat($(this).val()) || 0;
-                var change = Math.max(0, received - total);
-                $('#cash_modal_change').text('৳ ' + change.toFixed(2));
-                if (received >= total) {
-                    $('#cash_modal_change').removeClass('text-danger').addClass('text-success');
-                } else {
-                    $('#cash_modal_change').removeClass('text-success').addClass('text-danger');
-                }
-            });
-
-            // Submit Cash Payment
-            $('#submit_cash_payment').on('click', function () {
-                var total = parseFloat($('#cart_total_payable_val').data('value') || 0);
-                var received = parseFloat($('#cash_received_input').val());
-                if (isNaN(received) || received < total) {
-                    toastr.error("Cash received must be equal to or greater than Total Payable!");
-                    return;
-                }
-                
-                var change = Math.max(0, received - total);
-
-                // Set hidden inputs
-                $('#input_payment_method').val('Cash');
-                $('#input_payment_status').val('paid');
-                $('#input_paid_amount').val(total);
-                $('#input_received_amount').val(received);
-                $('#input_change_amount').val(change);
-                $('#split_payments_inputs').empty();
-                
-                $('#cashPaymentModal').modal('hide');
-                
-                // Submit Form
-                $('.pos_form').submit();
-            });
-
-            // Click Pay All Button
-            $('#btn-payment-payall').on('click', function () {
-                var total = parseFloat($('#cart_total_payable_val').data('value') || 0);
-                if (total <= 0) {
-                    toastr.warning("Cart is empty.");
-                    return;
-                }
-                
-                // Set hidden inputs
-                $('#input_payment_method').val('Cash');
-                $('#input_payment_status').val('paid');
-                $('#input_paid_amount').val(total);
-                $('#input_received_amount').val(total);
-                $('#input_change_amount').val(0);
-                $('#split_payments_inputs').empty();
-                
-                // Submit Form
-                $('.pos_form').submit();
-            });
-
-            // Click Multiple Button
-            $('#btn-payment-multiple').on('click', function () {
-                var total = parseFloat($('#cart_total_payable_val').data('value') || 0);
-                if (total <= 0) {
-                    toastr.warning("Cart is empty.");
-                    return;
-                }
-                $('#multiple_modal_payable').text('৳ ' + total.toFixed(2));
-                $('#multiple_modal_due').text('৳ ' + total.toFixed(2));
-                $('.split-amount').val('');
-                $('#submit_multiple_payment').attr('disabled', true);
-                $('#multiplePaymentModal').modal('show');
-            });
-
-            // Split payments inputs listener
-            $('.split-amount').on('input', function () {
-                var total = parseFloat($('#cart_total_payable_val').data('value') || 0);
-                var totalPaid = 0;
-                $('.split-amount').each(function () {
-                    var val = parseFloat($(this).val()) || 0;
-                    totalPaid += val;
-                });
-                
-                var remaining = Math.max(0, total - totalPaid);
-                $('#multiple_modal_due').text('৳ ' + remaining.toFixed(2));
-                
-                // Enable submit only if total paid is equal to or exceeds total payable
-                if (totalPaid >= total) {
-                    $('#multiple_modal_due').removeClass('text-danger').addClass('text-success');
-                    $('#submit_multiple_payment').attr('disabled', false);
-                } else {
-                    $('#multiple_modal_due').removeClass('text-success').addClass('text-danger');
-                    $('#submit_multiple_payment').attr('disabled', true);
-                }
-            });
-
-            // Submit Multiple Payment
-            $('#submit_multiple_payment').on('click', function () {
-                var total = parseFloat($('#cart_total_payable_val').data('value') || 0);
-                var totalPaid = 0;
-                var splitInputs = $('#split_payments_inputs');
-                splitInputs.empty();
-                
-                var index = 0;
-                $('.split-amount').each(function () {
-                    var val = parseFloat($(this).val()) || 0;
-                    if (val > 0) {
-                        var method = $(this).data('method');
-                        splitInputs.append('<input type="hidden" name="split_payments[' + index + '][method]" value="' + method + '">');
-                        splitInputs.append('<input type="hidden" name="split_payments[' + index + '][amount]" value="' + val + '">');
-                        totalPaid += val;
-                        index++;
-                    }
-                });
-                
-                if (totalPaid < total) {
-                    toastr.error("Total paid amount must be equal to or greater than Total Payable!");
-                    return;
-                }
-                
-                // Set hidden inputs
-                $('#input_payment_method').val('Multiple');
-                $('#input_payment_status').val('paid');
-                $('#input_paid_amount').val(total); // Cap at total payable
-                
-                $('#multiplePaymentModal').modal('hide');
-                
-                // Submit Form
-                $('.pos_form').submit();
             });
         });
 
@@ -1526,8 +787,8 @@
                 dataType: "html",
                 success: function (cartinfo) {
                     $("#cart_details").html(cartinfo);
-                    if (typeof window.updatePaymentSummary === 'function') {
-                        window.updatePaymentSummary();
+                    if (typeof calculateExchangeDifference === 'function') {
+                        calculateExchangeDifference();
                     }
                 },
             });

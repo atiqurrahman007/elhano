@@ -207,10 +207,11 @@
                                 <th style="width:5%">Invoice</th>
                                 <th style="width:20%">Customer</th>
                                 <th style="width:20%">Phone</th>
-                                <th style="width:30%">Product</th>
+                                <th style="width:20%">Product</th>
                                 <th style="width:10%">Purchase</th>
                                 <th style="width:10%">Sale</th>
-                                <th style="width:10%">Qty</th>
+                                <th style="width:10%">Discount</th>
+                                <th style="width:5%">Qty</th>
                                 <th style="width:10%">Total</th>
                             </tr>
                         </thead>               
@@ -230,6 +231,7 @@
                                 <td>{{$value->product_name}}</td>
                                 <td>{{$value->purchase_price}}</td>
                                 <td>{{$value->sale_price}}</td>
+                                <td>{{$value->order?$value->order->discount:0}}</td>
                                 <td>{{$value->qty}}</td>
                                 <td>{{$value->qty*$value->sale_price}}</td>
                             </tr>
@@ -242,16 +244,17 @@
                          </tbody>
                          <tfoot>
                              <tr>
-                                 <td colspan="5" class="text-end"><strong>Total</strong></td>
-                                 <td><strong>{{$total_purchase}}</strong></td>
+                                 <td colspan="6" class="text-end"><strong>Total</strong></td>
+                                 <td><strong>{{$total_discount}}</strong></td>
                                  <td><strong>{{$total_qty}}</strong></td>
                                  <td><strong>{{$total_sale}}</strong></td>
                              </tr>
                              <tr>
-                                 <td colspan="8" class="text-center">
+                                 <td colspan="9" class="text-center">
                                      <h5><strong>Total Purchase = {{$total_purchase}}</strong></h5>
                                      <h5><strong>Total Sales = {{$total_sales}}</strong></h5>
-                                     <h5><strong>Total Profit = {{$total_sales-$total_purchase}}</strong></h5>
+                                     <h5><strong>Total Discount = {{$total_discount}}</strong></h5>
+                                     <h5><strong>Total Profit = {{($total_sales - $total_discount) - $total_purchase}}</strong></h5>
                                  </td>
                              </tr>
                          </tfoot>

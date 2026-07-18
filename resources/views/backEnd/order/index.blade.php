@@ -84,7 +84,7 @@
                                             <a href="{{ route('admin.order.order_print', ['order_ids' => [$value->id]]) }}" title="POS Invoice" target="_blank"><i class="fe-printer"></i></a>
                                             <a href="{{ route('admin.order.process', ['invoice_id' => $value->id]) }}" title="Process"><i class="fe-settings"></i></a>
                                             @if(!empty($value->user_id))
-                                                <a href="{{ route('admin.order.pos_edit', ['invoice_id' => $value->id]) }}" title="POS Edit"><i class="fe-edit"></i></a>
+                                                <a href="{{ route('admin.order.pos_edit', ['invoice_id' => $value->id]) }}" title="Exchange"><i class="fe-refresh-cw"></i></a>
                                             @else
                                                 <a href="{{ route('admin.order.edit', ['invoice_id' => $value->id]) }}" title="Edit"><i class="fe-edit"></i></a>
                                             @endif
@@ -105,7 +105,11 @@
                                     <td><strong>{{ $value->shipping ? $value->shipping->name : '' }}</strong></td>
                                     <td>{{ $value->shipping ? $value->shipping->phone : '' }}</td>
                                     <td>{{ $value->courier_tracker }}</td>
-                                    <td>৳{{ $value->amount }}</td>
+                                    <td>৳{{ $value->amount }}
+                                        @if($value->discount > 0)
+                                            <br><small class="text-danger" style="font-weight: 600;">Disc: ৳{{ $value->discount }}</small>
+                                        @endif
+                                    </td>
                                     <td>{{ $value->status ? $value->status->name : '' }}</td>
 
                                 </tr>

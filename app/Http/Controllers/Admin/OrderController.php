@@ -1106,20 +1106,23 @@ class OrderController extends Controller
         }
 
         if ($start_date && $end_date) {
-            $start = \Carbon\Carbon::parse($start_date, 'Asia/Dhaka')->setTimezone('UTC');
+            $start = \Carbon\Carbon::parse($start_date, 'Asia/Dhaka');
             $end = \Carbon\Carbon::parse($end_date, 'Asia/Dhaka');
             if (strlen($end_date) <= 10) {
                 $end = $end->endOfDay();
             }
-            $end = $end->setTimezone('UTC');
             $orders = $orders->whereBetween('created_at', [$start, $end]);
         }
+
+        // Calculate sum of unique orders' discounts for the filtered dataset
+        $all_matching_order_ids = (clone $orders)->pluck('order_id')->unique();
+        $total_discount = Order::whereIn('id', $all_matching_order_ids)->sum('discount');
 
         $total_purchases = $orders->sum(DB::raw('purchase_price * qty'));
         $total_item = $orders->sum('qty');
         $total_sales = $orders->sum(DB::raw('sale_price * qty'));
         $orders = $orders->paginate(50);
-        return view('backEnd.reports.order', compact('orders', 'users', 'statuses', 'status', 'total_purchases', 'total_item', 'total_sales'));
+        return view('backEnd.reports.order', compact('orders', 'users', 'statuses', 'status', 'total_purchases', 'total_item', 'total_sales', 'total_discount'));
     }
     public function return_report(Request $request)
     {
@@ -1246,8 +1249,9 @@ class OrderController extends Controller
         
         $cartinfo = Cart::instance('sale')->content();
         $customers = Customer::where('status', 'active')->select('id', 'name', 'phone')->get();
+        $orderStatuses = OrderStatus::all();
         
-        return view('backEnd.order.pos_edit', compact('products', 'categories', 'cartinfo', 'shippingcharge', 'order', 'customers'));
+        return view('backEnd.order.pos_edit', compact('products', 'categories', 'cartinfo', 'shippingcharge', 'order', 'customers', 'orderStatuses'));
     }
 
     public function pos_order_update(Request $request)
@@ -1307,20 +1311,35 @@ class OrderController extends Controller
             }
         }
 
-        $order = Order::findOrFail($request->order_id);
+        $order = Order::with('orderdetails')->findOrFail($request->order_id);
+        $oldStatusId = $order->order_status;
+        // If the order was in a non-deducted status (like Returned or Cancelled),
+        // doing an exchange/update reactivates the order to Completed (status 6).
+        $newStatusId = $oldStatusId;
+        if (!\App\Service\InventoryService::isDeductedStatus($oldStatusId)) {
+            $newStatusId = 6;
+        }
         
-        $isDeducted = \App\Service\InventoryService::isDeductedStatus($order->order_status);
-        if ($isDeducted) {
+        // ── Step 1: Revert stock for ALL old order items ──
+        // Always revert old stock first (if old status was a deducted status)
+        if (\App\Service\InventoryService::isDeductedStatus($oldStatusId)) {
             \App\Service\InventoryService::revertStock($order);
         }
 
+        // ── Step 2: Delete ALL old order details ──
+        // Clean slate — no fragile matching needed
+        OrderDetails::where('order_id', $order->id)->delete();
+
+        // ── Step 3: Update order header ──
         $order->amount = $subtotal - $discount;
         $order->discount = $discount ? $discount : 0;
         $order->shipping_charge = 0;
         $order->customer_id = $customer_id;
+        $order->order_status = $newStatusId;
         $order->note = $request->note;
         $order->save();
 
+        // ── Step 4: Update shipping ──
         $shipping = Shipping::where('order_id', $order->id)->first();
         if (!$shipping) {
             $shipping = new Shipping();
@@ -1340,79 +1359,54 @@ class OrderController extends Controller
         }
         $shipping->save();
 
-        Payment::where('order_id', $order->id)->delete();
+        // ── Step 5: Create fresh order details from cart ──
+        foreach (Cart::instance('sale')->content() as $cart) {
+            $order_details = new OrderDetails();
+            $order_details->order_id = $order->id;
+            $order_details->product_id = $cart->id;
+            $order_details->product_name = $cart->name;
+            $order_details->purchase_price = $cart->options->purchase_price ?? 0;
+            $order_details->product_discount = $cart->options->product_discount ?? 0;
+            $order_details->sale_price = $cart->price;
+            $order_details->qty = $cart->qty;
+            $order_details->product_size = $cart->options->product_size;
+            $order_details->product_color = $cart->options->product_color;
+            $order_details->product_type = $cart->options->type ?? (Product::where('id', $cart->id)->value('type') ?? 0);
+            $order_details->save();
+        }
 
-        $payment_method = $request->payment_method ?? 'Cash';
-        $payment_status = $request->payment_status ?? 'paid';
-        $paid_amount = (int)round(floatval($request->paid_amount ?? $order->amount));
-
-        if ($payment_method === 'Multiple' && is_array($request->split_payments)) {
-            foreach ($request->split_payments as $split) {
-                $splitAmount = (int)round(floatval($split['amount'] ?? 0));
-                if ($splitAmount > 0) {
-                    $splitPayment = new Payment();
-                    $splitPayment->order_id = $order->id;
-                    $splitPayment->customer_id = $customer_id;
-                    $splitPayment->payment_method = $split['method'];
-                    $splitPayment->amount = $splitAmount;
-                    $splitPayment->received_amount = $splitAmount;
-                    $splitPayment->change_amount = 0;
-                    $splitPayment->payment_status = 'paid';
-                    $splitPayment->save();
-                }
-            }
-        } else {
+        // ── Step 6: Handle payment/refund difference ──
+        $diff = (int)round(floatval($request->payment_difference ?? 0));
+        if ($diff > 0) {
             $payment = new Payment();
             $payment->order_id = $order->id;
             $payment->customer_id = $customer_id;
-            $payment->payment_method = $payment_method;
-            $payment->amount = $paid_amount;
-            $payment->received_amount = (int)round(floatval($request->received_amount ?? $paid_amount));
-            $payment->change_amount = (int)round(floatval($request->change_amount ?? 0));
-            $payment->payment_status = $payment_status;
+            $payment->payment_method = $request->diff_payment_method ?? 'Cash';
+            $payment->amount = $diff;
+            $payment->received_amount = (int)round(floatval($request->diff_received_amount ?? $diff));
+            $payment->change_amount = (int)round(floatval($request->diff_change_amount ?? 0));
+            $payment->payment_status = 'paid';
+            $payment->save();
+        } elseif ($diff < 0) {
+            $payment = new Payment();
+            $payment->order_id = $order->id;
+            $payment->customer_id = $customer_id;
+            $payment->payment_method = $request->diff_payment_method ?? 'Cash';
+            $payment->amount = $diff;
+            $payment->received_amount = $diff;
+            $payment->change_amount = 0;
+            $payment->payment_status = 'refunded';
             $payment->save();
         }
 
-        foreach ($order->orderdetails as $orderdetail) {
-            $item = Cart::instance('sale')->content()->where('id', $orderdetail->product_id)->first();
-            if (!$item) {
-                $orderdetail->delete();
-            }
-        }
-
-        foreach (Cart::instance('sale')->content() as $cart) {
-            $exits = null;
-            if (!empty($cart->options->details_id)) {
-                $exits = OrderDetails::where('id', $cart->options->details_id)->first();
-            }
-            
-            if ($exits) {
-                $order_details = OrderDetails::find($exits->id);
-                $order_details->product_discount = $cart->options->product_discount;
-                $order_details->sale_price = $cart->price;
-                $order_details->qty = $cart->qty;
-                $order_details->save();
-            } else {
-                $order_details = new OrderDetails();
-                $order_details->order_id = $order->id;
-                $order_details->product_id = $cart->id;
-                $order_details->product_name = $cart->name;
-                $order_details->purchase_price = $cart->options->purchase_price;
-                $order_details->product_discount = $cart->options->product_discount;
-                $order_details->sale_price = $cart->price;
-                $order_details->qty = $cart->qty;
-                $order_details->product_size = $cart->options->product_size;
-                $order_details->product_color = $cart->options->product_color;
-                $order_details->product_type = $cart->options->type ?? (Product::where('id', $cart->id)->value('type') ?? 0);
-                $order_details->save();
-            }
-        }
-
+        // ── Step 7: Apply stock for NEW status ──
+        // Reload fresh order details and deduct stock only if new status requires it
         $order->load('orderdetails');
-        if ($isDeducted) {
+        if (\App\Service\InventoryService::isDeductedStatus($newStatusId)) {
             \App\Service\InventoryService::deductStock($order);
         }
 
+        // ── Step 8: Cleanup session ──
         Cart::instance('sale')->destroy();
         Session::forget('pos_shipping');
         Session::forget('pos_discount');
@@ -1433,3 +1427,4 @@ class OrderController extends Controller
         return redirect()->route('admin.orders', ['slug' => 'all']);
     }
 }
+
