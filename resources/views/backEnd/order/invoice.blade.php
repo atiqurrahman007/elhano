@@ -117,7 +117,7 @@
                                             Invoice ID : <strong>#{{ $order->invoice_id }}</strong></p>
                                         <p
                                             style="font-size: 15px; color: #222;font-weight:bold; transform: skew(-36deg); text-align: right; padding-right: 32px">
-                                            Invoice Date: <strong>{{ $order->created_at->format('d-m-y') }}</strong></span>
+                                            Invoice Date: <strong>{{ $order->created_at->timezone('Asia/Dhaka')->format('d-m-y') }}</strong></span>
                                         </p>
                                     </div>
                                     <div class="invoice_to" style="padding-top: 20px;">

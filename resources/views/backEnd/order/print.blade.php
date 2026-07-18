@@ -192,11 +192,11 @@
                     <td class="text-right">Terminal: POS-01</td>
                 </tr>
                 <tr>
-                    <td>Date: {{ $order->created_at->format('d M Y') }}</td>
+                    <td>Date: {{ $order->created_at->timezone('Asia/Dhaka')->format('d M Y') }}</td>
                     <td class="text-right">Cashier: {{ $cashier }}</td>
                 </tr>
                 <tr>
-                    <td>Time: {{ $order->created_at->format('h:i A') }}</td>
+                    <td>Time: {{ $order->created_at->timezone('Asia/Dhaka')->format('h:i A') }}</td>
                     <td class="text-right"></td>
                 </tr>
                 @if($order->shipping && $order->shipping->name)

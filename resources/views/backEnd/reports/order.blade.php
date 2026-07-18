@@ -246,8 +246,9 @@
                                 <thead>
                                     <tr>
                                         <th style="width:5%">Invoice</th>
-                                        <th style="width:20%">Customer</th>
-                                        <th style="width:20%">Phone</th>
+                                        <th style="width:10%">Date/Time</th>
+                                        <th style="width:15%">Customer</th>
+                                        <th style="width:15%">Phone</th>
                                         <th style="width:20%">Product</th>
                                         <th style="width:10%">Purchase</th>
                                         <th style="width:10%">Sale</th>
@@ -258,48 +259,57 @@
                                 </thead>
 
                                 <tbody>
+                                    @foreach($orders as $key=>$value)
                                     @php
-                                        $total_purchase = 0;
-                                        $total_qty = 0;
-                                        $total_sale = 0;
+                                        $orderPurchase = $value->orderdetails->sum(function($d) { return $d->purchase_price * $d->qty; });
+                                        $orderQty = $value->orderdetails->sum('qty');
+                                        $orderSaleGross = $value->amount + $value->discount;
                                     @endphp
-                                    @foreach($orders as $key => $value)
-
-                                        <tr>
-                                            <td>{{$value->order ? $value->order->invoice_id : ''}}</td>
-                                            <td>{{$value->shipping ? $value->shipping->name : ''}}</td>
-                                            <td>{{$value->shipping ? $value->shipping->phone : ''}}</td>
-                                            <td>{{$value->product_name}}</td>
-                                            <td>{{$value->purchase_price}}</td>
-                                            <td>{{$value->sale_price}}</td>
-                                            <td>{{$value->order ? $value->order->discount : 0}}</td>
-                                            <td>{{$value->qty}}</td>
-                                            <td>{{$value->qty * $value->sale_price}}</td>
-                                        </tr>
-                                        @php
-                                            $total_purchase += $value->qty * $value->purchase_price;
-                                            $total_qty += $value->qty;
-                                            $total_sale += $value->qty * $value->sale_price;
-                                        @endphp
-                                    @endforeach
-                                </tbody>
-                                <tfoot>
                                     <tr>
-                                        <td colspan="6" class="text-end"><strong>Total</strong></td>
-                                        <td><strong>{{$total_discount}}</strong></td>
-                                        <td><strong>{{$total_qty}}</strong></td>
-                                        <td><strong>{{$total_sale}}</strong></td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="9" class="text-center">
-                                            <h5><strong>Total Purchase = {{$total_purchase}}</strong></h5>
-                                            <h5><strong>Total Sales = {{$total_sales}}</strong></h5>
-                                            <h5><strong>Total Discount = {{$total_discount}}</strong></h5>
-                                            <h5><strong>Total Profit =
-                                                    {{($total_sales - $total_discount) - $total_purchase}}</strong></h5>
+                                        <td>{{$value->invoice_id}}</td>
+                                        <td>{{$value->created_at ? $value->created_at->timezone('Asia/Dhaka')->format('d-m-Y h:i A') : ''}}</td>
+                                        <td>{{$value->shipping ? $value->shipping->name : ''}}</td>
+                                        <td>{{$value->shipping ? $value->shipping->phone : ''}}</td>
+                                        <td>
+                                            @foreach($value->orderdetails as $detail)
+                                                <div class="small">
+                                                    {{ $detail->product_name }} 
+                                                    @if($detail->product_size || $detail->product_color)
+                                                        <span class="text-muted">
+                                                            ({{ $detail->product_size }}{{ $detail->product_size && $detail->product_color ? ', ' : '' }}{{ $detail->product_color }})
+                                                        </span>
+                                                    @endif
+                                                    <strong>x{{ $detail->qty }}</strong>
+                                                </div>
+                                            @endforeach
                                         </td>
+                                        <td>{{$orderPurchase}}</td>
+                                        <td>{{$orderSaleGross}}</td>
+                                        <td>{{$value->discount}}</td>
+                                        <td>{{$orderQty}}</td>
+                                        <td>{{$value->amount}}</td>
                                     </tr>
-                                </tfoot>
+                                    @endforeach
+                                 </tbody>
+                                 <tfoot>
+                                     <tr>
+                                         <td colspan="5" class="text-end"><strong>Total</strong></td>
+                                         <td><strong>{{$total_purchases}}</strong></td>
+                                         <td><strong>{{$total_sales}}</strong></td>
+                                         <td><strong>{{$total_discount}}</strong></td>
+                                         <td><strong>{{$total_item}}</strong></td>
+                                         <td><strong>{{$total_sales_net}}</strong></td>
+                                     </tr>
+                                     <tr>
+                                         <td colspan="10" class="text-center">
+                                             <h5><strong>Total Purchase Cost = {{$total_purchases}}</strong></h5>
+                                             <h5><strong>Total Sales (Gross) = {{$total_sales}}</strong></h5>
+                                             <h5><strong>Total Discount = {{$total_discount}}</strong></h5>
+                                             <h5><strong>Total Sales (Net) = {{$total_sales_net}}</strong></h5>
+                                             <h5><strong>Total Profit = {{$total_sales_net - $total_purchases}}</strong></h5>
+                                         </td>
+                                     </tr>
+                                 </tfoot>
                             </table>
                         </div>
 

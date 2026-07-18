@@ -107,8 +107,7 @@
                                                 <td>{{$loop->iteration}}</td>
                                                 <td>{{$value->invoice_id}}</td>
                                                 <td>{{$value->shipping ? $value->shipping->name : ''}}</td>
-                                                <td>{{date('d-m-Y', strtotime($value->created_at))}}
-                                                    ,{{date('h:i a', strtotime($value->created_at))}}</td>
+                                                <td>{{$value->created_at->timezone('Asia/Dhaka')->format('d-m-Y')}} ,{{$value->created_at->timezone('Asia/Dhaka')->format('h:i a')}}</td>
                                                 <td>৳{{$value->amount}}</td>
                                                 <td>{{$value->status ? $value->status->name : ''}}</td>
                                             </tr>

@@ -108,8 +108,8 @@
                                             <i class="fa fa-gift"></i>
                                         @endif
                                     </td>
-                                    <td style="white-space:nowrap;">{{ date('d-m-Y', strtotime($value->updated_at)) }}<br>
-                                        {{ date('h:i:s a', strtotime($value->updated_at)) }}</td>
+                                    <td style="white-space:nowrap;">{{ $value->updated_at->timezone('Asia/Dhaka')->format('d-m-Y') }}<br>
+                                        {{ $value->updated_at->timezone('Asia/Dhaka')->format('h:i:s a') }}</td>
                                     <td><strong>{{ $value->shipping ? $value->shipping->name : '' }}</strong></td>
                                     <td>{{ $value->shipping ? $value->shipping->phone : '' }}</td>
                                     <td>{{ $value->courier_tracker }}</td>
