@@ -205,12 +205,13 @@
                         <thead>
                             <tr>
                                 <th style="width:5%">Invoice</th>
-                                <th style="width:20%">Customer</th>
-                                <th style="width:20%">Phone</th>
+                                <th style="width:10%">Date/Time</th>
+                                <th style="width:15%">Customer</th>
+                                <th style="width:15%">Phone</th>
                                 <th style="width:20%">Product</th>
                                 <th style="width:10%">Purchase</th>
                                 <th style="width:10%">Sale</th>
-                                <th style="width:10%">Discount</th>
+                                <th style="width:5%">Discount</th>
                                 <th style="width:5%">Qty</th>
                                 <th style="width:10%">Total</th>
                             </tr>
@@ -226,6 +227,7 @@
                             
                             <tr>
                                 <td>{{$value->order?$value->order->invoice_id:''}}</td>
+                                <td>{{$value->created_at ? date('d-m-Y h:i A', strtotime($value->created_at)) : ''}}</td>
                                 <td>{{$value->shipping?$value->shipping->name:''}}</td>
                                 <td>{{$value->shipping?$value->shipping->phone:''}}</td>
                                 <td>{{$value->product_name}}</td>
@@ -244,13 +246,13 @@
                          </tbody>
                          <tfoot>
                              <tr>
-                                 <td colspan="6" class="text-end"><strong>Total</strong></td>
+                                 <td colspan="7" class="text-end"><strong>Total</strong></td>
                                  <td><strong>{{$total_discount}}</strong></td>
                                  <td><strong>{{$total_qty}}</strong></td>
                                  <td><strong>{{$total_sale}}</strong></td>
                              </tr>
                              <tr>
-                                 <td colspan="9" class="text-center">
+                                 <td colspan="10" class="text-center">
                                      <h5><strong>Total Purchase = {{$total_purchase}}</strong></h5>
                                      <h5><strong>Total Sales = {{$total_sales}}</strong></h5>
                                      <h5><strong>Total Discount = {{$total_discount}}</strong></h5>

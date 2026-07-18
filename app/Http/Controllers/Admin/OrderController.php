@@ -1053,7 +1053,7 @@ class OrderController extends Controller
         
         $status = $request->has('order_status') ? $request->order_status : 6;
 
-        $orders = OrderDetails::with('shipping', 'order');
+        $orders = OrderDetails::with('shipping', 'order')->latest();
 
         if ($status) {
             $orders = $orders->whereHas('order', function ($query) use ($status) {
