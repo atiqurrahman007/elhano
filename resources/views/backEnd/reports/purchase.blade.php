@@ -37,7 +37,7 @@
                         @foreach($purchase as $key=>$value)
                          <tr>
                             <td style="width:2%">{{$loop->iteration}}</td>
-                            <td style="width:20%">{{$value->created_at->format('d-m-Y')}}</td>
+                            <td style="width:20%">{{$value->created_at->timezone('Asia/Dhaka')->format('d-m-Y')}}</td>
                             <td style="width:20%">{{$value->product?$value->product->name:''}}</td>
                             <td style="width:10%">{{$value->product?$value->product->category->name:''}}</td>
                             <td style="width:10%">{{$value->color}} , {{$value->size}}</td>

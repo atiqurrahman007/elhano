@@ -80,8 +80,8 @@
                         <tr>
                             <td>{{ $logs->firstItem() + $key }}</td>
                             <td style="font-size:12px">
-                                {{ $log->created_at->format('d M y') }}<br>
-                                <span class="text-muted">{{ $log->created_at->format('h:i A') }}</span>
+                                {{ $log->created_at->timezone('Asia/Dhaka')->format('d M y') }}<br>
+                                <span class="text-muted">{{ $log->created_at->timezone('Asia/Dhaka')->format('h:i A') }}</span>
                             </td>
                             <td><code style="font-size:12px">{{ $log->barcode }}</code></td>
                             <td>{{ $log->product ? $log->product->name : '<span class="text-danger">N/A</span>' }}</td>
