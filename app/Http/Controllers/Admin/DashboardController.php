@@ -29,27 +29,21 @@ class DashboardController extends Controller
     {
         $order_statuses = OrderStatus::where('status', 1)->withCount('orders')->get();
         $total_sale = Order::where('order_status', 6)->sum('amount');
-        
-        $todayStart = Carbon::today('Asia/Dhaka')->setTimezone('UTC');
-        $todayEnd = Carbon::today('Asia/Dhaka')->endOfDay()->setTimezone('UTC');
-        $monthStart = Carbon::now('Asia/Dhaka')->startOfMonth()->setTimezone('UTC');
-        $monthEnd = Carbon::now('Asia/Dhaka')->endOfMonth()->setTimezone('UTC');
-
-        $today_order = Order::whereBetween('created_at', [$todayStart, $todayEnd])->count();
-        $today_sales = Order::where('order_status', 6)->whereBetween('created_at', [$todayStart, $todayEnd])->sum('amount');
-        $current_month_sale = Order::where('order_status', 6)->whereBetween('created_at', [$monthStart, $monthEnd])->sum('amount');
+        $today_order = Order::whereDate('created_at', Carbon::today())->count();
+        $today_sales = Order::where('order_status', 6)->whereDate('created_at', Carbon::today())->sum('amount');
+        $current_month_sale = Order::where('order_status', 6)->whereMonth('created_at', Carbon::now()->month)->sum('amount');
         $total_order = Order::count();
-        $current_month_order = Order::whereBetween('created_at', [$monthStart, $monthEnd])->count();
+        $current_month_order = Order::whereMonth('created_at', Carbon::now()->month)->count();
         $total_customer = Customer::count();
         $latest_order = Order::latest()->limit(5)->with('customer', 'product', 'product.productImage')->get();
         $latest_customer = Customer::latest()->limit(5)->get();
         $dates = [];
-        $startDate = Carbon::now('Asia/Dhaka')->subDays(29);
+        $startDate = Carbon::now()->subDays(29);
         for ($i = 0; $i < 30; $i++) {
             $dates[] = $startDate->copy()->addDays($i)->format('Y-m-d');
         }
-        $payments = Order::selectRaw('DATE(CONVERT_TZ(created_at, "+00:00", "+06:00")) as date, SUM(amount) as total_amount')
-            ->where('created_at', '>=', Carbon::now('Asia/Dhaka')->subDays(30)->startOfDay()->setTimezone('UTC'))
+        $payments = Order::selectRaw('DATE(created_at) as date, SUM(amount) as total_amount')
+            ->where('created_at', '>=', Carbon::now()->subDays(30))
             ->groupBy('date')
             ->pluck('total_amount', 'date');
         $totals = [];
@@ -65,17 +59,14 @@ class DashboardController extends Controller
             ->limit(10)->get();
 
         if ($request->start_date && $request->end_date) {
-            $start = \App\Service\TimezoneService::parseLocalToUtc($request->start_date);
-            $end = \App\Service\TimezoneService::parseLocalToUtc($request->end_date, true);
-
-            $total_order = Order::whereBetween('created_at', [$start, $end])->count();
-            $return_amount = Order::where('order_status', '8')->whereBetween('created_at', [$start, $end])->sum('amount');
-            $total_complete = Order::where('order_status', '6')->whereBetween('created_at', [$start, $end])->count();
-            $total_process = Order::whereNotIn('order_status', ['1', '6', '7', '8'])->whereBetween('created_at', [$start, $end])->count();
-            $total_return = Order::where('order_status', '9')->whereBetween('created_at', [$start, $end])->count();
-            $delivery_amount = Order::where('order_status', '6')->whereBetween('created_at', [$start, $end])->sum('amount');
-            $total_amount = Order::whereBetween('created_at', [$start, $end])->sum('amount');
-            $process_amount = Order::whereNotIn('order_status', ['1', '6', '7', '8'])->whereBetween('created_at', [$start, $end])->sum('amount');
+            $total_order = Order::whereBetween('created_at', [$request->start_date, $request->end_date])->count();
+            $return_amount = Order::where('order_status', '8')->whereBetween('created_at', [$request->start_date, $request->end_date])->sum('amount');
+            $total_complete = Order::where('order_status', '6')->whereBetween('created_at', [$request->start_date, $request->end_date])->count();
+            $total_process = Order::whereNotIn('order_status', ['1', '6', '7', '8'])->whereBetween('created_at', [$request->start_date, $request->end_date])->count();
+            $total_return = Order::where('order_status', '9')->whereBetween('created_at', [$request->start_date, $request->end_date])->count();
+            $delivery_amount = Order::where('order_status', '6')->whereBetween('created_at', [$request->start_date, $request->end_date])->sum('amount');
+            $total_amount = Order::whereBetween('created_at', [$request->start_date, $request->end_date])->sum('amount');
+            $process_amount = Order::whereNotIn('order_status', ['1', '6', '7', '8'])->whereBetween('created_at', [$request->start_date, $request->end_date])->sum('amount');
         } else {
             $total_order = Order::count();
             $return_amount = Order::where('order_status', '8')->sum('amount');

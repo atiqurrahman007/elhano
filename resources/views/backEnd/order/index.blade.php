@@ -79,19 +79,27 @@
                                     <td><input type="checkbox" class="checkbox" value="{{ $value->id }}"></td>
                                     <td>{{ $loop->iteration }}</td>
                                     <td style="white-space:nowrap;">
-                                        <div class="button-list custom-btn-list" style="display:inline-flex; flex-wrap:nowrap; gap:4px; align-items:center;">
-                                            <a href="{{ route('admin.order.invoice', ['invoice_id' => $value->id]) }}" title="Invoice" target="_blank"><i class="fe-eye"></i></a>
-                                            <a href="{{ route('admin.order.order_print', ['order_ids' => [$value->id]]) }}" title="POS Invoice" target="_blank"><i class="fe-printer"></i></a>
-                                            <a href="{{ route('admin.order.process', ['invoice_id' => $value->id]) }}" title="Process"><i class="fe-settings"></i></a>
+                                        <div class="button-list custom-btn-list"
+                                            style="display:inline-flex; flex-wrap:nowrap; gap:4px; align-items:center;">
+                                            <a href="{{ route('admin.order.invoice', ['invoice_id' => $value->id]) }}"
+                                                title="Invoice" target="_blank"><i class="fe-eye"></i></a>
+                                            <a href="{{ route('admin.order.order_print', ['order_ids' => [$value->id]]) }}"
+                                                title="POS Invoice" target="_blank"><i class="fe-printer"></i></a>
+                                            <a href="{{ route('admin.order.process', ['invoice_id' => $value->id]) }}"
+                                                title="Process"><i class="fe-settings"></i></a>
                                             @if(!empty($value->user_id))
-                                                <a href="{{ route('admin.order.pos_edit', ['invoice_id' => $value->id]) }}" title="Exchange"><i class="fe-refresh-cw"></i></a>
+                                                <a href="{{ route('admin.order.pos_edit', ['invoice_id' => $value->id]) }}"
+                                                    title="Exchange"><i class="fe-refresh-cw"></i></a>
                                             @else
-                                                <a href="{{ route('admin.order.edit', ['invoice_id' => $value->id]) }}" title="Edit"><i class="fe-edit"></i></a>
+                                                <a href="{{ route('admin.order.edit', ['invoice_id' => $value->id]) }}"
+                                                    title="Edit"><i class="fe-edit"></i></a>
                                             @endif
-                                            <form method="post" action="{{ route('admin.order.destroy') }}" class="d-inline" style="display:inline;">
+                                            <form method="post" action="{{ route('admin.order.destroy') }}" class="d-inline"
+                                                style="display:inline;">
                                                 @csrf
                                                 <input type="hidden" value="{{ $value->id }}" name="id">
-                                                <button type="submit" title="Delete" class="delete-confirm"><i class="fe-trash-2"></i></button>
+                                                <button type="submit" title="Delete" class="delete-confirm"><i
+                                                        class="fe-trash-2"></i></button>
                                             </form>
                                         </div>
                                     </td>
@@ -100,14 +108,15 @@
                                             <i class="fa fa-gift"></i>
                                         @endif
                                     </td>
-                                    <td style="white-space:nowrap;">{{ $value->updated_at->timezone('Asia/Dhaka')->format('d-m-Y') }}<br>
-                                        {{ $value->updated_at->timezone('Asia/Dhaka')->format('h:i:s a') }}</td>
+                                    <td style="white-space:nowrap;">{{ date('d-m-Y', strtotime($value->updated_at)) }}<br>
+                                        {{ date('h:i:s a', strtotime($value->updated_at)) }}</td>
                                     <td><strong>{{ $value->shipping ? $value->shipping->name : '' }}</strong></td>
                                     <td>{{ $value->shipping ? $value->shipping->phone : '' }}</td>
                                     <td>{{ $value->courier_tracker }}</td>
                                     <td>৳{{ $value->amount }}
                                         @if($value->discount > 0)
-                                            <br><small class="text-danger" style="font-weight: 600;">Disc: ৳{{ $value->discount }}</small>
+                                            <br><small class="text-danger" style="font-weight: 600;">Disc:
+                                                ৳{{ $value->discount }}</small>
                                         @endif
                                     </td>
                                     <td>{{ $value->status ? $value->status->name : '' }}</td>

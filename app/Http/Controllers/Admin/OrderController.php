@@ -1053,22 +1053,20 @@ class OrderController extends Controller
         
         $status = $request->has('order_status') ? $request->order_status : 6;
 
-        $orders = Order::with('shipping', 'orderdetails')->latest();
+        $orders = OrderDetails::with('shipping', 'order')->latest();
 
         if ($status) {
-            $orders = $orders->where('order_status', $status);
-        }
-        if ($request->keyword) {
-            $orders = $orders->where(function ($query) use ($request) {
-                $query->where('invoice_id', 'LIKE', '%' . $request->keyword . '%')
-                    ->orWhereHas('shipping', function ($subQuery) use ($request) {
-                        $subQuery->where('phone', $request->keyword)
-                            ->orWhere('name', 'LIKE', '%' . $request->keyword . '%');
-                    });
+            $orders = $orders->whereHas('order', function ($query) use ($status) {
+                $query->where('order_status', $status);
             });
         }
+        if ($request->keyword) {
+            $orders = $orders->where('name', 'LIKE', '%' . $request->keyword . "%");
+        }
         if ($request->user_id) {
-            $orders = $orders->where('user_id', $request->user_id);
+            $orders = $orders->whereHas('order', function ($query) use ($request) {
+                $query->where('user_id', $request->user_id);
+            });
         }
 
         $start_date = $request->start_date;
@@ -1108,26 +1106,23 @@ class OrderController extends Controller
         }
 
         if ($start_date && $end_date) {
-            $start = \Carbon\Carbon::parse($start_date, 'Asia/Dhaka')->setTimezone('UTC');
+            $start = \Carbon\Carbon::parse($start_date, 'Asia/Dhaka');
             $end = \Carbon\Carbon::parse($end_date, 'Asia/Dhaka');
             if (strlen($end_date) <= 10) {
                 $end = $end->endOfDay();
             }
-            $end = $end->setTimezone('UTC');
             $orders = $orders->whereBetween('created_at', [$start, $end]);
         }
 
-        // Calculate sum statistics correctly for the filtered dataset
-        $all_matching_order_ids = (clone $orders)->pluck('id');
-        $total_purchases = OrderDetails::whereIn('order_id', $all_matching_order_ids)->sum(DB::raw('purchase_price * qty'));
-        $total_item = OrderDetails::whereIn('order_id', $all_matching_order_ids)->sum('qty');
-        
-        $total_sales_net = (clone $orders)->sum('amount');
-        $total_discount = (clone $orders)->sum('discount');
-        $total_sales = $total_sales_net + $total_discount; // Gross sales before discount
+        // Calculate sum of unique orders' discounts for the filtered dataset
+        $all_matching_order_ids = (clone $orders)->pluck('order_id')->unique();
+        $total_discount = Order::whereIn('id', $all_matching_order_ids)->sum('discount');
 
+        $total_purchases = $orders->sum(DB::raw('purchase_price * qty'));
+        $total_item = $orders->sum('qty');
+        $total_sales = $orders->sum(DB::raw('sale_price * qty'));
         $orders = $orders->paginate(50);
-        return view('backEnd.reports.order', compact('orders', 'users', 'statuses', 'status', 'total_purchases', 'total_item', 'total_sales', 'total_discount', 'total_sales_net'));
+        return view('backEnd.reports.order', compact('orders', 'users', 'statuses', 'status', 'total_purchases', 'total_item', 'total_sales', 'total_discount'));
     }
     public function return_report(Request $request)
     {
@@ -1138,11 +1133,7 @@ class OrderController extends Controller
             $orders = $orders->where('name', 'LIKE', '%' . $request->keyword . "%");
         }
         if ($request->start_date && $request->end_date) {
-            $start = \App\Service\TimezoneService::parseLocalToUtc($request->start_date);
-            $end = \App\Service\TimezoneService::parseLocalToUtc($request->end_date, true);
-            $orders = $orders->whereHas('order', function ($query) use ($start, $end) {
-                $query->whereBetween('created_at', [$start, $end]);
-            });
+            $orders = $orders->whereBetween('created_at', [$request->start_date, $request->end_date]);
         }
         $total_purchases = $orders->sum(DB::raw('purchase_price * qty'));
         $total_item = $orders->sum('qty');
@@ -1161,9 +1152,7 @@ class OrderController extends Controller
             $products = $products->where('category_id', $request->category_id);
         }
         if ($request->start_date && $request->end_date) {
-            $start = \App\Service\TimezoneService::parseLocalToUtc($request->start_date);
-            $end = \App\Service\TimezoneService::parseLocalToUtc($request->end_date, true);
-            $products = $products->whereBetween('created_at', [$start, $end]);
+            $products = $products->whereBetween('created_at', [$request->start_date, $request->end_date]);
         }
         $total_purchase = $products->sum(DB::raw('purchase_price * stock'));
         $total_stock = $products->sum('stock');
@@ -1182,9 +1171,7 @@ class OrderController extends Controller
             $data = $data->where('expense_cat_id', $request->category_id);
         }
         if ($request->start_date && $request->end_date) {
-            $start = \App\Service\TimezoneService::parseLocalToUtc($request->start_date);
-            $end = \App\Service\TimezoneService::parseLocalToUtc($request->end_date, true);
-            $data = $data->whereBetween('created_at', [$start, $end]);
+            $data = $data->whereBetween('created_at', [$request->start_date, $request->end_date]);
         }
         $data = $data->paginate(10);
         $categories = ExpenseCategories::where('status', 1)->get();
@@ -1193,18 +1180,15 @@ class OrderController extends Controller
     public function loss_profit(Request $request)
     {
         if ($request->start_date && $request->end_date) {
-            $start = \App\Service\TimezoneService::parseLocalToUtc($request->start_date);
-            $end = \App\Service\TimezoneService::parseLocalToUtc($request->end_date, true);
-
-            $total_expense = Expense::where('status', 1)->whereBetween('created_at', [$start, $end])->sum('amount');
-            $total_purchase = OrderDetails::whereHas('order', function ($query) use ($start, $end) {
+            $total_expense = Expense::where('status', 1)->whereBetween('created_at', [$request->start_date, $request->end_date])->sum('amount');
+            $total_purchase = OrderDetails::whereHas('order', function ($query) use ($request) {
                 $query->where('order_status', 6)
-                    ->whereBetween('created_at', [$start, $end]);
+                    ->whereBetween('created_at', [$request->start_date, $request->end_date]);
             })->sum(DB::raw('purchase_price * qty'));
 
-            $total_sales = OrderDetails::whereHas('order', function ($query) use ($start, $end) {
+            $total_sales = OrderDetails::whereHas('order', function ($query) use ($request) {
                 $query->where('order_status', 6)
-                    ->whereBetween('created_at', [$start, $end]);
+                    ->whereBetween('created_at', [$request->start_date, $request->end_date]);
             })->sum(DB::raw('sale_price * qty'));
         } else {
             $total_expense = Expense::where('status', 1)->sum('amount');
