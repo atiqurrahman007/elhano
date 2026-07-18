@@ -36,8 +36,8 @@
                                             Print</a></li>
                                     @if ($steadfast)
                                         <li><a href="{{ route('admin.bulk_courier', 'steadfast') }}"
-                                                class="btn rounded-pill btn-pink multi_order_courier"><i
-                                                    class="fe-truck"></i> Steadfast</a></li>
+                                                class="btn rounded-pill btn-pink multi_order_courier"><i class="fe-truck"></i>
+                                                Steadfast</a></li>
                                     @endif
 
                                 </ul>
@@ -61,14 +61,14 @@
                                         <th style="width:2%">SL</th>
                         </div>
                         </th>
-                        <th style="width:8%">Action</th>
-                        <th style="width:8%">Invoice</th>
-                        <th style="width:10%">Date</th>
+                        <th style="width:14%">Action</th>
+                        <th style="width:7%">Invoice</th>
+                        <th style="width:9%">Date</th>
                         <th style="width:10%">Name</th>
-                        <th style="width:10%">Phone</th>
-                        <th style="width:10%">Courier ID</th>
-                        <th style="width:10%">Amount</th>
-                        <th style="width:10%">Status</th>
+                        <th style="width:8%">Phone</th>
+                        <th style="width:8%">Courier ID</th>
+                        <th style="width:7%">Amount</th>
+                        <th style="width:7%">Status</th>
                         </tr>
                         </thead>
 
@@ -78,42 +78,31 @@
                                 <tr>
                                     <td><input type="checkbox" class="checkbox" value="{{ $value->id }}"></td>
                                     <td>{{ $loop->iteration }}</td>
-                                    <td>
-                                        <div class="button-list custom-btn-list">
-                                            <a href="{{ route('admin.order.invoice', ['invoice_id' => $value->id]) }}"
-                                                title="Invoice" target="_blank"><i class="fe-eye"></i></a>
-                                            <a href="{{ route('admin.order.order_print', ['order_ids' => [$value->id]]) }}"
-                                                title="POS Invoice" target="_blank"><i class="fe-printer"></i></a>
-                                            <a href="{{ route('admin.order.process', ['invoice_id' => $value->id]) }}"
-                                                title="Process"><i class="fe-settings"></i></a>
+                                    <td style="white-space:nowrap;">
+                                        <div class="button-list custom-btn-list" style="display:inline-flex; flex-wrap:nowrap; gap:4px; align-items:center;">
+                                            <a href="{{ route('admin.order.invoice', ['invoice_id' => $value->id]) }}" title="Invoice" target="_blank"><i class="fe-eye"></i></a>
+                                            <a href="{{ route('admin.order.order_print', ['order_ids' => [$value->id]]) }}" title="POS Invoice" target="_blank"><i class="fe-printer"></i></a>
+                                            <a href="{{ route('admin.order.process', ['invoice_id' => $value->id]) }}" title="Process"><i class="fe-settings"></i></a>
                                             @if(!empty($value->user_id))
-                                                <a href="{{ route('admin.order.pos_edit', ['invoice_id' => $value->id]) }}"
-                                                    title="POS Edit"><i class="fe-edit"></i></a>
+                                                <a href="{{ route('admin.order.pos_edit', ['invoice_id' => $value->id]) }}" title="POS Edit"><i class="fe-edit"></i></a>
                                             @else
-                                                <a href="{{ route('admin.order.edit', ['invoice_id' => $value->id]) }}"
-                                                    title="Edit"><i class="fe-edit"></i></a>
+                                                <a href="{{ route('admin.order.edit', ['invoice_id' => $value->id]) }}" title="Edit"><i class="fe-edit"></i></a>
                                             @endif
-                                            <form method="post" action="{{ route('admin.order.destroy') }}"
-                                                class="d-inline">
+                                            <form method="post" action="{{ route('admin.order.destroy') }}" class="d-inline" style="display:inline;">
                                                 @csrf
                                                 <input type="hidden" value="{{ $value->id }}" name="id">
-                                                <button type="submit" title="Delete" class="delete-confirm"><i
-                                                        class="fe-trash-2"></i></button>
+                                                <button type="submit" title="Delete" class="delete-confirm"><i class="fe-trash-2"></i></button>
                                             </form>
-                                            <a data-bs-toggle="modal" data-bs-target="#pathao{{ $value->id }}"
-                                                class="btn btn-success">pathao</a>
                                         </div>
                                     </td>
-                                    <td>{{ $value->invoice_id }}<br> {{ $value->customer_ip }} <br>
+                                    <td style="white-space:nowrap;">{{ $value->invoice_id }}
                                         @if ($value->order_type == 'digital')
                                             <i class="fa fa-gift"></i>
                                         @endif
                                     </td>
-                                    <td>{{ date('d-m-Y', strtotime($value->updated_at)) }}<br>
+                                    <td style="white-space:nowrap;">{{ date('d-m-Y', strtotime($value->updated_at)) }}<br>
                                         {{ date('h:i:s a', strtotime($value->updated_at)) }}</td>
-                                    <td><strong>{{ $value->shipping ? $value->shipping->name : '' }}</strong>
-                                        <p>{{ $value->shipping ? $value->shipping->address : '' }}</p>
-                                    </td>
+                                    <td><strong>{{ $value->shipping ? $value->shipping->name : '' }}</strong></td>
                                     <td>{{ $value->shipping ? $value->shipping->phone : '' }}</td>
                                     <td>{{ $value->courier_tracker }}</td>
                                     <td>৳{{ $value->amount }}</td>
@@ -280,19 +269,19 @@
     <!-- pathao courier  End-->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        $(document).ready(function() {
-            $(".checkall").on('change', function() {
+        $(document).ready(function () {
+            $(".checkall").on('change', function () {
                 $(".checkbox").prop('checked', $(this).is(":checked"));
             });
 
             // order assign
-            $(document).on('submit', 'form#order_assign', function(e) {
+            $(document).on('submit', 'form#order_assign', function (e) {
                 e.preventDefault();
                 var url = $(this).attr('action');
                 var method = $(this).attr('method');
                 let user_id = $(document).find('select#user_id').val();
 
-                var order = $('input.checkbox:checked').map(function() {
+                var order = $('input.checkbox:checked').map(function () {
                     return $(this).val();
                 });
                 var order_ids = order.get();
@@ -309,7 +298,7 @@
                         user_id,
                         order_ids
                     },
-                    success: function(res) {
+                    success: function (res) {
                         if (res.status == 'success') {
                             toastr.success(res.message);
                             window.location.reload();
@@ -323,13 +312,13 @@
             });
 
             // order status change
-            $(document).on('submit', 'form#order_status_form', function(e) {
+            $(document).on('submit', 'form#order_status_form', function (e) {
                 e.preventDefault();
                 var url = $(this).attr('action');
                 var method = $(this).attr('method');
                 let order_status = $(document).find('select#order_status').val();
 
-                var order = $('input.checkbox:checked').map(function() {
+                var order = $('input.checkbox:checked').map(function () {
                     return $(this).val();
                 });
                 var order_ids = order.get();
@@ -346,7 +335,7 @@
                         order_status,
                         order_ids
                     },
-                    success: function(res) {
+                    success: function (res) {
                         if (res.status == 'success') {
                             toastr.success(res.message);
                             window.location.reload();
@@ -359,10 +348,10 @@
 
             });
             // order delete
-            $(document).on('click', '.order_delete', function(e) {
+            $(document).on('click', '.order_delete', function (e) {
                 e.preventDefault();
                 var url = $(this).attr('href');
-                var order = $('input.checkbox:checked').map(function() {
+                var order = $('input.checkbox:checked').map(function () {
                     return $(this).val();
                 });
                 var order_ids = order.get();
@@ -378,7 +367,7 @@
                     data: {
                         order_ids
                     },
-                    success: function(res) {
+                    success: function (res) {
                         if (res.status == 'success') {
                             toastr.success(res.message);
                             window.location.reload();
@@ -392,10 +381,10 @@
             });
 
             // multiple print
-            $(document).on('click', '.multi_order_print', function(e) {
+            $(document).on('click', '.multi_order_print', function (e) {
                 e.preventDefault();
                 var url = $(this).attr('href');
-                var order = $('input.checkbox:checked').map(function() {
+                var order = $('input.checkbox:checked').map(function () {
                     return $(this).val();
                 });
                 var order_ids = order.get();
@@ -410,7 +399,7 @@
                     data: {
                         order_ids
                     },
-                    success: function(res) {
+                    success: function (res) {
                         if (res.status == 'success') {
                             console.log(res.items, res.info);
                             var myWindow = window.open("", "_blank");
@@ -422,10 +411,10 @@
                 });
             });
             // multiple courier
-            $(document).on('click', '.multi_order_courier', function(e) {
+            $(document).on('click', '.multi_order_courier', function (e) {
                 e.preventDefault();
                 var url = $(this).attr('href');
-                var order = $('input.checkbox:checked').map(function() {
+                var order = $('input.checkbox:checked').map(function () {
                     return $(this).val();
                 });
                 var order_ids = order.get();
@@ -441,7 +430,7 @@
                     data: {
                         order_ids
                     },
-                    success: function(res) {
+                    success: function (res) {
                         if (res.status == 'success') {
                             toastr.success(res.message);
                             window.location.reload();
